@@ -21,7 +21,7 @@ export const SchoolProvider= ({ children }) => {
   const [annesActive, setAnnesActive] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const [enseignants, setEnseignants] = useState<any[]>([]);
+  const [enseignants, setEnseignants] = useState([]);
 
   useEffect(() => {
     async function fetchInitialData() {

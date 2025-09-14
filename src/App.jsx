@@ -1,5 +1,5 @@
 import { BrowserRouter} from "react-router-dom";
-
+import { SchoolProvider } from "./context/SchoolContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { ToastProvider } from "./ToastProvider";
 import Loyout from "./AppRoutes";
@@ -12,6 +12,7 @@ import { AuthProvider } from "./context/AuthContext";
 function App() {
   return (
     <BrowserRouter>
+    <SchoolProvider>
     <AuthProvider>
     <ThemeProvider>
         {/* <Navbar/> */}
@@ -19,6 +20,7 @@ function App() {
       <ToastProvider/>
     </ThemeProvider>
     </AuthProvider>
+    </SchoolProvider>
     </BrowserRouter>
 
   )
