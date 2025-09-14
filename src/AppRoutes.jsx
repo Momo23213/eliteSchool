@@ -14,6 +14,7 @@ import Setting from "./pages/admin/Setting";
 import PaiementControles from "./pages/admin/PaiementControles";
 import PaiementFrais from "./pages/admin/PaiementFrais";
 import Paiements from "./pages/admin/Paiements";
+import DetailEleve from "./components/eleves/DetailEleve";
 function Layout() {
   const location = useLocation();
   const cache = location.pathname === "/";
@@ -35,6 +36,9 @@ function Layout() {
           }/>
          <Route path="/eleves" element={
            <PrivateRoute roles={["admin"]}><ElevesPages /></PrivateRoute>
+          }/>
+         <Route path="/eleves/detail/:id" element={
+           <PrivateRoute roles={["admin"]}><DetailEleve /></PrivateRoute>
           }/>
          <Route path="/enseignants" element={
            <PrivateRoute roles={["admin"]}><EnseignantsPage /></PrivateRoute>

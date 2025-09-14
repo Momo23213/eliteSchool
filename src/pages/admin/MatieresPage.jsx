@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { classeService } from '../../services/classeService';
+import  classeService  from '../../services/classeService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBook, faPlus, faEdit, faTrash, faSearch, faChartBar, faSpinner, faSort } from '@fortawesome/free-solid-svg-icons';
-import { matiereService } from '../../services/matiereService';
+import  matiereService  from '../../services/matiereService';
 import { CheckCircle, XCircle, BookOpen, BarChart3, Filter, SortAsc, Users, BookOpen as BookOpenIcon, Trophy, Star } from 'lucide-react';
 import '../../styles/animations.css';
 
@@ -222,7 +222,7 @@ function MatieresPage() {
                     </div>
         
                     {/* Contrôles */}
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                       <button
                         onClick={() => setShowFilters(!showFilters)}
                         className="flex items-center px-4 py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300"

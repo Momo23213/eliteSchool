@@ -376,7 +376,7 @@ function ClassesPage() {
                   </div>
       
                   {/* Contrôles */}
-                  <div className="flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                     <button
                       onClick={() => setShowFilters(!showFilters)}
                       className="flex items-center px-4 py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300"

@@ -1,6 +1,10 @@
-import React from 'react'
 
-function Card({ icon, title, value }) {
+
+
+
+
+
+function Cards({ icon, title, value }) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 flex flex-col items-center hover:shadow-xl transition-shadow duration-300">
     {icon}
@@ -10,4 +14,4 @@ function Card({ icon, title, value }) {
   )
 }
 
-export default Card;
+export default Cards;
