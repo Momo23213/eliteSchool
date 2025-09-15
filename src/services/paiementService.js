@@ -17,7 +17,7 @@ const paiementService = {
   },
 
   getAllPaiements: async (page = 1, limit = 10) => {
-    const res = await api.get(`/paiements/affiches?page=${page}&limit=${limit}`);
+    const res = await api.get(`/paiements/affiche?page=${page}&limit=${limit}`);
     return res.data;
   },
 
