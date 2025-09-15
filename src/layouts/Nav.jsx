@@ -9,6 +9,7 @@ import {
   Star,
   School
 } from 'lucide-react';
+import "../styles/animations.css";
 // import { useAuth } from '../context/AuthContext';
 
 
@@ -88,7 +89,6 @@ const Navbar = () => {
       { name: "Calendrier", path: "/calendrier", icon: Calendar },
       { name: "Emploi du temps", path: "/emploi-du-temps", icon: Calendar },
       { name: "Mon Ecole", path: "/setting", icon: School },
-      { name: "Année scolaire", path: "/profil", icon: Calendar1 },
     ];
   }
 
@@ -189,7 +189,7 @@ const Navbar = () => {
   // ------------------------------
   const handleLogout = () => {
     if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-      // logout();
+       logout();
       <Navigate to="/" />;
     }
   };
@@ -207,21 +207,23 @@ const Navbar = () => {
   const toggleMenu = () => setIsOpen(!isOpen);
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
-  const linkBaseStyle = "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-in-out";
-  const linkInactiveStyle = "text-gray-600 dark:text-gray-300 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-gray-800 dark:hover:text-blue-400";
-  const linkActiveStyle = "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 font-semibold shadow-sm";
+  const linkBaseStyle = "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ease-in-out transform hover:scale-105 hover-lift";
+  const linkInactiveStyle = "text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:text-blue-700 dark:hover:bg-gradient-to-r dark:hover:from-gray-800 dark:hover:to-gray-700 dark:hover:text-blue-400 hover:shadow-lg";
+  const linkActiveStyle = "bg-gradient-to-r from-blue-500 to-purple-600 text-white dark:from-blue-600 dark:to-purple-700 font-semibold shadow-lg animate-pulse-soft";
 
   return (
-    <nav className="fixed top-0 left-0 w-full z-50 bg-white dark:bg-gray-900 shadow-lg border-b border-gray-200 dark:border-gray-700">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+    <nav className="fixed top-0 left-0 w-full z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl shadow-2xl border-b border-gray-200/50 dark:border-gray-700/50 animate-slide-down">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
         {/* Logo */}
-        <NavLink to="/" className="flex items-center gap-2 text-2xl font-extrabold font-serif text-blue-600 dark:text-blue-400">
-          <GraduationCap size={30} className="text-blue-500" />
-          EliteSchool
+        <NavLink to="/" className="flex items-center gap-3 text-2xl font-extrabold font-serif bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent hover:scale-110 transition-all duration-300 animate-fade-in">
+          <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-lg animate-float">
+            <GraduationCap size={28} className="text-white" />
+          </div>
+          <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">EliteSchool</span>
         </NavLink>
 
         {/* Liens de navigation (grand écran) */}
-        <div className="hidden md:flex space-x-2 lg:space-x-4 items-center">
+        <div className="hidden md:flex space-x-2 lg:space-x-4 items-center animate-fade-in-delay-1">
           {navGroups.map(group => (
             group.items.length === 1 ? (
               <NavLink
@@ -236,7 +238,7 @@ const Navbar = () => {
               <div key={group.label} className="relative">
                 <button
                   onClick={() => setOpenGroup(prev => prev === group.label ? null : group.label)}
-                  className={`${linkBaseStyle} ${linkInactiveStyle} flex items-center`}
+                  className={`${linkBaseStyle} ${linkInactiveStyle} flex items-center relative overflow-hidden`}
                 >
                   {group.icon ? <group.icon size={18} /> : null}
                   <span className="hidden lg:inline">{group.label}</span>
@@ -244,7 +246,7 @@ const Navbar = () => {
                 </button>
                 {/* Dropdown */}
                 <div
-                  className={`absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden transition transform origin-top-right ${openGroup === group.label ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}
+                  className={`absolute right-0 mt-2 w-56 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 transform origin-top-right ${openGroup === group.label ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'}`}
                 >
                   <div className="py-2">
                     {group.items.map(item => (
@@ -266,33 +268,33 @@ const Navbar = () => {
          
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-full animate-spin-clockwise text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+            className="p-3 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 dark:from-blue-500 dark:to-purple-600 text-white hover:scale-110 hover:rotate-12 transition-all duration-300 shadow-lg hover:shadow-xl animate-bounce-soft"
             aria-label="Toggle dark mode"
           >
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
           <button
                   onClick={handleLogout}
-                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                  className="p-3 rounded-xl bg-gradient-to-r from-red-500 to-pink-600 text-white hover:scale-110 hover:shadow-xl transition-all duration-300 hover-lift"
                   title="Se déconnecter"
                 >
-                  <LogOut className="w-5 h-5 text-gray-600 dark:text-gray-400 " />
+                  <LogOut className="w-5 h-5" />
                 </button>
         </div>
 
         {/* Boutons pour mobile (hamburger et thème) */}
-        <div className="md:hidden flex items-center gap-2">
+        <div className="md:hidden flex items-center gap-3 animate-fade-in-delay-2">
        
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+            className="p-2 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 dark:from-blue-500 dark:to-purple-600 text-white hover:scale-110 transition-all duration-300 shadow-lg"
             aria-label="Toggle dark mode"
           >
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
           <button
             onClick={toggleMenu}
-            className="p-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+            className="p-2 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:scale-110 hover:rotate-180 transition-all duration-300 shadow-lg"
             aria-label="Toggle menu"
           >
             {isOpen ? <X size={24} /> : <Menu size={24} />}
@@ -302,24 +304,24 @@ const Navbar = () => {
 
       {/* Menu mobile (slide-in) */}
       <div
-        className={`md:hidden fixed inset-0  bg-opacity-50 z-40 transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        className={`md:hidden fixed inset-0 z-40 transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={toggleMenu}
       >
         <div
-          className={`fixed top-0 right-0 w-64 h-full bg-white dark:bg-gray-900 shadow-xl transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          className={`fixed top-0 right-0 w-72 h-full bg-white dark:bg-gray-900 shadow-2xl transform transition-all duration-500 ease-in-out border-l border-gray-200 dark:border-gray-700 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-            <span className="text-xl font-bold text-blue-600 dark:text-blue-400">Navigation</span>
+          <div className="p-6 border-b border-gray-200/50 dark:border-gray-700/50 flex justify-between items-center bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-700">
+            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Navigation</span>
             <button
               onClick={toggleMenu}
-              className="p-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+              className="p-2 rounded-xl bg-gradient-to-r from-red-500 to-pink-600 text-white hover:scale-110 hover:rotate-90 transition-all duration-300 shadow-lg"
               aria-label="Close menu"
             >
               <X size={24} />
             </button>
           </div>
-          <div className="flex flex-col p-4 space-y-2">
+          <div className="flex flex-col p-6 space-y-3">
             {navMobileLinks.map(link => (
               <NavLink
                 key={link.name}

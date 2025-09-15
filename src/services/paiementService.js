@@ -12,7 +12,7 @@ const paiementService = {
   },
 
   getByEleve: async (eleveId) => {
-    const res = await api.get(`/paiement/eleve/${eleveId}`);
+    const res = await api.get(`/paiements/eleves/${eleveId}`);
     return res.data;
   },
 
