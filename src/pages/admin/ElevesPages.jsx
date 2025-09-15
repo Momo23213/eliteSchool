@@ -282,7 +282,7 @@ function ElevesPages() {
             onClose={closeReinsModal}
           />
         )}
-
+{/* axios.get("https://schoolelite.onrender.com/api/statistiques"); */}
         {/* Modal Ajouter un élève */}
         <Modal
           isOpen={isAddModalOpen}
