@@ -70,7 +70,7 @@ const Navbar = () => {
         label: "Setting",
         icon: User,
         items: [
-          { name: "Profil", path: "/setting", icon: User },
+          { name: "Mon Ecole", path: "/setting", icon: User },
         ]
       }
     ];
@@ -82,16 +82,13 @@ const Navbar = () => {
       { name: "Classes", path: "/classes", icon: BookOpen },
       { name: "Matières", path: "/matieres", icon: Book },
       { name: "Notes", path: "/notes", icon: BookOpen },
-      { name: "Résultats", path: "/notes/resultats", icon: BookOpen },
-      { name: "Saisie", path: "/notes/saisie", icon: BookOpen },
+      { name: "Résultats", path: "/notes_resultats", icon: BookOpen },
+      { name: "Saisie", path: "/notes_saisie", icon: BookOpen },
       { name: "Paiements", path: "/paiements", icon: DollarSign },
       { name: "Calendrier", path: "/calendrier", icon: Calendar },
       { name: "Emploi du temps", path: "/emploi-du-temps", icon: Calendar },
-      { name: "Mon Ecole", path: "/profil", icon: School },
-      { name: "Profil", path: "/profil", icon: User },
-      { name: "Message", path: "/profil", icon: MessageCircle },
+      { name: "Mon Ecole", path: "/setting", icon: School },
       { name: "Année scolaire", path: "/profil", icon: Calendar1 },
-      { name: "premiu", path: "/profil", icon: Star },
     ];
   }
 

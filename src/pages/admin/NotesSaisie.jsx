@@ -1,269 +1,256 @@
+// src/components/NotesSaisie.jsx
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useForm, FormProvider, useFieldArray, useFormContext } from "react-hook-form";
+import axios from "axios";
+import { useSchool } from "../../context/SchoolContext";
+import { User, Book, GraduationCap, Layers, Award, CircleCheck, CircleAlert } from "lucide-react";
 
-import React, { useEffect, useState } from 'react';
-import { Eye, Search, Filter, ChevronDown, Plus } from 'lucide-react';
-import  noteService  from '../../services/noteService';
+const API_URL = "https://schoolelite.onrender.com/api/notes/tableau";
 
-function NotesSaisie() {
-   const [loader, setLoader] = useState(true);
-    const [data, setData] = useState([]);
-    const [searchTerm, setSearchTerm] = useState('');
-      // const closeAddModal = () => setIsAddModalOpen(false);
-    const [showFilters, setShowFilters] = useState(false);
-    //  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [filters, setFilters] = useState({
-      classeId: '',
-      statut: '',
-      sexe: '',
-    });
-  
+const NoteFormTable = () => {
+  const { eleves, fetchElevesByClasse, loading } = useSchool();
+  const { control, register, watch, formState: { errors } } = useFormContext();
+  const { fields, replace } = useFieldArray({ control, name: "notes" });
+  const watchedClasseId = watch("classeId");
+
   useEffect(() => {
-      async function not() {
-        try {
-          setLoader(true);
-          const data = await noteService.getAll();
-          // Adapter les données reçues du backend au format attendu par le tableau
-          const mappedData = data.map((n) => ({
-            _id: n._id,
-            eleveId: {
-              _id: n.eleveId?._id || '',
-              matricule: n.eleveId?.matricule || '',
-              nom: n.eleveId?.nom || '',
-              prenom: n.eleveId?.prenom || '',
-              photo: n.eleveId?.photo || '',
-              sexe: n.eleveId?.sexe || '',
-              classeId: n.eleveId?.classeId || {},
-              statut: n.eleveId?.statut || '',
-            },
-            matiereId: {
-              _id: n.matiereId?._id || '',
-              nom: n.matiereId?.nom || '',
-            },
-            enseignantId: {
-              nom: n.enseignantId?.[0]?.nom || '',
-              prenom: n.enseignantId?.[0]?.prenom || '',
-            },
-            valeur: n.valeur ?? 0,
-            trimestre: n.trimestre || '',
-            sequence: n.sequence || '',
-            anneeScolaireId: {
-              _id: n.anneeScolaireId?._id || '',
-              libelle: n.anneeScolaireId?.libelle || '',
-            },
-          }));
-          setData(mappedData);
-        } catch (error) {
-          console.log(error.message); // ✅ corrigé
-        } finally {
-          setLoader(false);
-        }
-      }
-      not();
-    }, []);
-  
-    // const handleAdd = () => {
-    //   setIsAddModalOpen(true);
-    // };
-  
-  
-    const uniqueClasses = Array.from(new Set(data.map(item => item.eleveId.classeId.nom)));
-  
-    const handleFilterChange = (e) => {
-      const { name, value } = e.target;
-      setFilters(prev => ({ ...prev, [name]: value }));
-    };
-  
-    const filteredData = data.filter(item => {
-      // Filtrage par terme de recherche
-      const matchesSearchTerm =
-        item.eleveId.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.eleveId.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.eleveId.matricule.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.matiereId.nom.toLowerCase().includes(searchTerm.toLowerCase());
-  
-      // Filtrage par les options des filtres
-      const matchesFilters =
-        (filters.classeId === '' || item.eleveId.classeId.nom === filters.classeId) &&
-        (filters.statut === '' || item.eleveId.statut === filters.statut) &&
-        (filters.sexe === '' || item.eleveId.sexe === filters.sexe);
-  
-      return matchesSearchTerm && matchesFilters;
-    });
+    if (!watchedClasseId) {
+      replace([]);
+      return;
+    }
+    fetchElevesByClasse(watchedClasseId);
+  }, [watchedClasseId]);
+
+  useEffect(() => {
+    if (Array.isArray(eleves) && eleves.length > 0) {
+      replace(
+        eleves.map(eleve => ({
+          eleveId: eleve._id,
+          nomComplet: `${eleve.prenom} ${eleve.nom}`,
+          matricule: eleve.matricule || "-",
+          valeur: 0
+        }))
+      );
+    } else {
+      replace([]);
+    }
+  }, [eleves]);
+
+  const watchedNotes = watch("notes");
+
+  return (
+    <div className="w-full">
+      {/* Tableau desktop */}
+      <div className="hidden md:block overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-800">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nom Complet</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Matricule</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Note</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+            {loading ? (
+              <tr>
+                <td colSpan={3} className="px-6 py-4 text-center">
+                  <div className="flex justify-center items-center gap-2 text-blue-600 dark:text-blue-300">
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 00-12 12h4z"/>
+                    </svg>
+                    Chargement des élèves...
+                  </div>
+                </td>
+              </tr>
+            ) : fields.length > 0 ? (
+              fields.map((field, index) => (
+                <tr key={field.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{field.nomComplet}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{field.matricule || "-"}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <input
+                      type="number"
+                      step="0.01"
+                      defaultValue={field.valeur}
+                      {...register(`notes.${index}.valeur`, { required: "Requis", min: { value:0, message:">= 0" }, max:{value:20,message:"<= 20"} })}
+                      className="w-24 p-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-center text-sm"
+                    />
+                    {errors.notes?.[index]?.valeur && <p className="mt-1 text-xs text-red-500">{errors.notes[index].valeur?.message}</p>}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={3} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">Sélectionnez une classe pour afficher les élèves.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Cards mobile */}
+      <div className="block md:hidden space-y-4">
+        {loading ? (
+          <div className="flex justify-center items-center gap-2 text-blue-600 dark:text-blue-300">
+            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 00-12 12h4z"/>
+            </svg>
+            Chargement des élèves...
+          </div>
+        ) : fields.length > 0 ? (
+          fields.map((field, index) => (
+            <div key={field.id} className="p-4 rounded-lg shadow bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+              <p className="text-sm font-medium text-gray-900 dark:text-white">{field.nomComplet}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Matricule : {field.matricule || "-"}</p>
+              <div className="mt-2">
+                <input
+                  type="number"
+                  step="0.01"
+                  defaultValue={field.valeur}
+                  {...register(`notes.${index}.valeur`, { required: "Requis", min: { value:0, message:">= 0" }, max:{value:20,message:"<= 20"} })}
+                  className="w-full p-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-center text-sm"
+                />
+                {errors.notes?.[index]?.valeur && <p className="mt-1 text-xs text-red-500">{errors.notes[index].valeur?.message}</p>}
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className="text-center text-gray-500 dark:text-gray-400">Sélectionnez une classe pour afficher les élèves.</p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const NotesSaisie = () => {
+  const navigate = useNavigate();
+  const { classes, matieres, annes, enseignants } = useSchool();
+  const [message, setMessage] = useState(null);
+
+  const methods = useForm({ defaultValues: { notes: [] } });
+  const { handleSubmit, reset, register, watch, formState:{ errors } } = methods;
+
+  const trimestres = ["1er trimestre","2ème trimestre","3ème trimestre"];
+  const sequences = ["Séquence 1","Séquence 2","Séquence 3","Séquence 4","Séquence 5","Séquence 6"];
+
+  const onSubmit = async (data) => {
+    if (!data.classeId || !data.matiereId || !data.enseignantId || !data.trimestre || !data.sequence || !data.anneeScolaireId) {
+      setMessage({ type:'error', text:"Veuillez remplir tous les champs obligatoires." });
+      return;
+    }
+
+    const notesToSubmit = data.notes.map(note => ({
+      eleveId: note.eleveId,
+      matiereId: data.matiereId,
+      enseignantId: data.enseignantId,
+      valeur: note.valeur,
+      trimestre: data.trimestre,
+      sequence: data.sequence,
+      anneeScolaireId: data.anneeScolaireId
+    }));
+
+    try {
+      const response = await axios.post(API_URL, notesToSubmit);
+      setMessage({ type:'success', text: response.data.message || "Notes enregistrées avec succès !" });
+      reset();
+      setTimeout(()=>navigate('/notes'),1200);
+    } catch (error) {
+      setMessage({ type:'error', text: error.response?.data?.message || "Erreur lors de l'enregistrement." });
+      console.error(error);
+    }
+  };
+
+  const inputStyle = `w-full p-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500`;
+  const labelStyle = "flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1";
+
   return (
     <div className="min-h-screen mt-10 w-full p-4 md:p-8 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-gray-900 dark:text-white transition-all duration-300">
-       <div className="container mx-auto p-4 md:p-8">
-      
-              {/* Bloc de recherche et de filtres */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
-                <div className="flex flex-col md:flex-row gap-4 items-center">
-                  <div className="flex-1 relative w-full">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    <input
-                      type="text"
-                      placeholder="Rechercher par nom, prénom, matricule..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                  <button
-                    onClick={() => setShowFilters(!showFilters)}
-                    className="w-full md:w-auto flex items-center justify-center px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                  >
-                    <Filter className="w-4 h-4 mr-2" />
-                    Filtres
-                    <ChevronDown className={`w-4 h-4 ml-2 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-                  </button>
-                  <button
-                    className="flex items-center w-full md:w-auto px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all duration-200 transform hover:scale-105"
-                    // onClick={handleAdd}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Ajouter
-                  </button>
-                </div>
-      
-                {/* Section des filtres (affichée/masquée) */}
-                <div className={`mt-4 transition-all duration-300 ease-in-out overflow-hidden ${showFilters ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-dashed border-gray-300 dark:border-gray-600">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Classe</label>
-                      <select name="classeId" value={filters.classeId} onChange={handleFilterChange} className="w-full p-2 rounded-md bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600">
-                        <option value="">Toutes les classes</option>
-                        {uniqueClasses.map(classe => <option key={classe} value={classe}>{classe}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Statut</label>
-                      <select name="statut" value={filters.statut} onChange={handleFilterChange} className="w-full p-2 rounded-md bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600">
-                        <option value="">Tous les statuts</option>
-                        <option value="inscrit">Inscrit</option>
-                        <option value="reinscrit">Réinscrit</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Sexe</label>
-                      <select name="sexe" value={filters.sexe} onChange={handleFilterChange} className="w-full p-2 rounded-md bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600">
-                        <option value="">Tous les sexes</option>
-                        <option value="M">Masculin</option>
-                        <option value="F">Féminin</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </div>
-      
-              {/* Section Tableau (visible sur les écrans moyens et plus grands) */}
-              {loader ? <h1>Chargement de la liste de notes</h1> : 
-              <div className="dark:text-white overflow-x-auto shadow-xl rounded-lg hidden md:block">
-                <table className="w-full text-sm text-left rtl:text-right">
-                  <thead className={"text-xs uppercase dark:bg-gray-700 dark:text-white bg-gray-50 text-gray-700"}>
-                    <tr>
-                      <th scope="col" className="px-6 py-3">Classe</th>
-                      <th scope="col" className="px-6 py-3">Image</th>
-                      <th scope="col" className="px-6 py-3">Matricule</th>
-                      <th scope="col" className="px-6 py-3">Nom de l'élève</th>
-                      <th scope="col" className="px-6 py-3">Matière</th>
-                      <th scope="col" className="px-6 py-3">Trimestre</th>
-                      <th scope="col" className="px-6 py-3">Séquence</th>
-                      <th scope="col" className="px-6 py-3">Note</th>
-                      <th scope="col" className="px-6 py-3">Enseignant</th>
-                      <th scope="col" className="px-6 py-3">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredData.length > 0 ? (
-                      filteredData.map((item) => (
-                        <tr
-                          key={item._id}
-                          className={`border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-700 bg-white border-gray-200 hover:bg-gray-50`}
-                        >
-                            <td className="px-6 py-4">{item.eleveId.classeId.nom}</td>
-                          <td className="px-6 py-4">
-                            <img
-                             src={`https://schoolelite.onrender.com${item.eleveId.photo}`}
-                              alt={`${item.eleveId.prenom} ${item.eleveId.nom}`}
-                              className="w-10 h-10 rounded-full object-cover"
-                            />
-                          </td>
-                          <td className="px-6 py-4">{item.eleveId.matricule}</td>
-                          <td className="px-6 py-4 font-medium whitespace-nowrap">{item.eleveId.prenom} {item.eleveId.nom}</td>
-                          <td className="px-6 py-4">{item.matiereId.nom}</td>
-                          <td className="px-6 py-4">{item.trimestre}</td>
-                          <td className="px-6 py-4">{item.sequence}</td>
-                          <td className="px-6 py-4">{item.valeur}</td>
-                          <td className="px-6 py-4">{item.enseignantId.prenom} {item.enseignantId.nom}</td>
-                          <td className="px-6 py-4">
-                            <button className="text-blue-600 dark:text-blue-500 hover:underline">
-                              <Eye className="h-5 w-5" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={9} className="text-center px-6 py-4 text-lg">
-                          Aucune donnée trouvée.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>}
-      
-              {/* Section Cartes (visible sur les petits écrans) */}
-              {loader ? <h1>Chargement de la liste de notes</h1> : 
-              <div className="md:hidden grid grid-cols-1 gap-4">
-                {filteredData.length > 0 ? (
-                  filteredData.map((item) => (
-                    <div
-                      key={item._id}
-                      className={"p-4 rounded-lg shadow-md dark:bg-gray-800 dark:text-white border dark:border-gray-700 bg-white border border-gray-200"}
-                    >
-                      <div className="flex items-center mb-3">
-                        <img
-                          src={`https://schoolelite.onrender.com${item.eleveId.photo}`}
-                          alt={`${item.eleveId.prenom} ${item.eleveId.nom}`}
-                          className="w-12 h-12 rounded-full object-cover mr-4"
-                        />
-                        <div>
-                          <h3 className="font-semibold text-lg">{item.eleveId.prenom} {item.eleveId.nom}</h3>
-                          <p className="text-gray-500 dark:text-gray-400 text-sm">Matricule: {item.eleveId.matricule}</p>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <p><strong>Classe:</strong> {item.eleveId.classeId.nom}</p>
-                        <p><strong>Statut:</strong> {item.eleveId.statut}</p>
-                        <p><strong>Sexe:</strong> {item.eleveId.sexe}</p>
-                        <p><strong>Matière:</strong> {item.matiereId.nom}</p>
-                        <p><strong>Note:</strong> {item.valeur}</p>
-                        <p><strong>Trimestre:</strong> {item.trimestre}</p>
-                        <p><strong>Séquence:</strong> {item.sequence}</p>
-                        <p><strong>Enseignant:</strong> {item.enseignantId.prenom} {item.enseignantId.nom}</p>
-                        <p><strong>Année:</strong> {item.anneeScolaireId.libelle}</p>
-                      </div>
-                      <div className="mt-4 text-right">
-                        <button className="text-blue-600 dark:text-blue-500 hover:underline flex items-center justify-end">
-                          <Eye className="h-4 w-4 mr-1" /> Voir Détails
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className={`p-4 rounded-lg shadow-md text-center text-lg dark:bg-gray-800 border dark:border-gray-700 bg-white border border-gray-200`}>
-                    Aucune donnée trouvée.
-                  </div>
-                )}
-              </div>}
-            </div>
-                        {/* <Modal
-                          isOpen={isAddModalOpen}
-                          onClose={closeAddModal}
-                          title="Saisir les notes d'une classe"
-                        >
-                          <NoteFormTable/>
-                        </Modal> */}
-    </div>
-  )
-}
+      <h1 className="text-4xl mb-2.5 lg:text-5xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+        La saisie des notes
+      </h1>
+      <hr className="my-2.5"/>
 
-export default NotesSaisie
+      <FormProvider {...methods}>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Champs communs */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            <div>
+              <label className={labelStyle}><GraduationCap size={16}/>Classe</label>
+              <select {...register("classeId",{ required:"La classe est requise" })} className={inputStyle}>
+                <option value="">Sélectionner une classe</option>
+                {classes.map(c=><option key={c._id} value={c._id}>{c.nom}</option>)}
+              </select>
+              {errors.classeId && <p className="text-red-500 text-xs mt-1 italic">{errors.classeId.message}</p>}
+            </div>
+
+            <div>
+              <label className={labelStyle}><Book size={16}/>Matière</label>
+              <select {...register("matiereId",{ required:"La matière est requise" })} className={inputStyle}>
+                <option value="">Sélectionner une matière</option>
+                {matieres.map(m=><option key={m._id} value={m._id}>{m.nom}</option>)}
+              </select>
+              {errors.matiereId && <p className="text-red-500 text-xs mt-1 italic">{errors.matiereId.message}</p>}
+            </div>
+
+            <div>
+              <label className={labelStyle}><GraduationCap size={16}/>Enseignant</label>
+              <select {...register("enseignantId",{ required:"L'enseignant est requis" })} className={inputStyle}>
+                <option value="">Sélectionner un enseignant</option>
+                {enseignants.map(e=><option key={e._id} value={e._id}>{e.nom} {e.prenom}</option>)}
+              </select>
+              {errors.enseignantId && <p className="text-red-500 text-xs mt-1 italic">{errors.enseignantId.message}</p>}
+            </div>
+
+            <div>
+              <label className={labelStyle}><Layers size={16}/>Trimestre</label>
+              <select {...register("trimestre",{ required:"Le trimestre est requis" })} className={inputStyle}>
+                <option value="">Sélectionner un trimestre</option>
+                {trimestres.map(t=><option key={t} value={t}>{t}</option>)}
+              </select>
+              {errors.trimestre && <p className="text-red-500 text-xs mt-1 italic">{errors.trimestre.message}</p>}
+            </div>
+
+            <div>
+              <label className={labelStyle}><Layers size={16}/>Séquence</label>
+              <select {...register("sequence",{ required:"La séquence est requise" })} className={inputStyle}>
+                <option value="">Sélectionner une séquence</option>
+                {sequences.map(s=><option key={s} value={s}>{s}</option>)}
+              </select>
+              {errors.sequence && <p className="text-red-500 text-xs mt-1 italic">{errors.sequence.message}</p>}
+            </div>
+
+            <div>
+              <label className={labelStyle}><GraduationCap size={16}/>Année scolaire</label>
+              <select {...register("anneeScolaireId",{ required:"L'année est requise" })} className={inputStyle}>
+                <option value="">Sélectionner une année</option>
+                {annes.map(a=><option key={a._id} value={a._id}>{a.libelle}</option>)}
+              </select>
+              {errors.anneeScolaireId && <p className="text-red-500 text-xs mt-1 italic">{errors.anneeScolaireId.message}</p>}
+            </div>
+          </div>
+
+          {/* Tableau / cards */}
+          <NoteFormTable />
+
+          {/* Message */}
+          {message && (
+            <div className={`flex items-center gap-2 p-4 rounded-lg font-medium ${message.type==='success' ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300":"bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"}`}>
+              {message.type==='success' ? <CircleCheck size={20}/> : <CircleAlert size={20}/>}
+              {message.text}
+            </div>
+          )}
+
+          {/* Bouton */}
+          <button type="submit" className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+            Enregistrer toutes les notes
+          </button>
+        </form>
+      </FormProvider>
+    </div>
+  );
+};
+
+export default NotesSaisie;

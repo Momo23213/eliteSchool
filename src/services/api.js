@@ -1,13 +1,10 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "https://schoolelite.onrender.com/api",
+  baseURL: "https://schoolelite.onrender.com/api",
   withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
-
+// "https://schoolelite.onrender.com/api"
 // Attach token automatically
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");

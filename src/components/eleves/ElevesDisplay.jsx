@@ -117,7 +117,7 @@ const ElevesDisplay = ({ eleves, onEdit, onDelete, onReinsEleve }) => {
                 <tr key={eleve._id} className="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <img
-                      src={`https://schoolelite.onrender.com${eleve.photo}`}
+                      src={`${eleve.photo}`}
                       alt={`${eleve.prenom} ${eleve.nom}`}
                       className="h-10 w-10 rounded-full object-cover"
                     />
@@ -166,7 +166,7 @@ const ElevesDisplay = ({ eleves, onEdit, onDelete, onReinsEleve }) => {
               className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col items-center text-center hover:shadow-xl transition-all duration-300"
             >
               <img
-                src={`https://schoolelite.onrender.com${eleve.photo}`}
+                src={`${eleve.photo}`}
                 alt={`${eleve.prenom} ${eleve.nom}`}
                 className="w-24 h-24 rounded-full mb-4 border-4 border-purple-500 dark:border-purple-400 object-cover"
               />

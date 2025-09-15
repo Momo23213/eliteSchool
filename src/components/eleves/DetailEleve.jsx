@@ -8,35 +8,38 @@ const DetailEleve = () => {
   const [eleve, setEleve] = useState(null);
   const [paiements, setPaiements] = useState([]);
   const [notes, setNotes] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
         const [eleveRes, paiementRes, noteRes] = await Promise.all([
           axios.get(`https://schoolelite.onrender.com/api/eleves/${id}`),
-          axios.get(`https://schoolelite.onrender.com/api/paiement/eleves/${id}`),
+          axios.get(`https://schoolelite.onrender.com/api/paiements/eleves/${id}`),
           axios.get(`https://schoolelite.onrender.com/api/notes/eleve/${id}`),
         ]);
 
         setEleve(eleveRes.data);
         setPaiements(paiementRes.data);
-        setNotes(
-          noteRes.data.sort((a, b) =>
-            a.anneeScolaireId.libelle.localeCompare(b.anneeScolaireId.libelle)
-          )
-        );
+        setNotes(noteRes.data.sort((a, b) =>
+          a.anneeScolaireId.libelle.localeCompare(b.anneeScolaireId.libelle)
+        ));
       } catch (err) {
         console.error(err);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchData();
   }, [id]);
 
-  if (!eleve) return <p className="p-4">Chargement...</p>;
+  if (loading) return <p className="text-center py-10">Chargement...</p>;
+  if (!eleve) return <p className="text-center py-10 text-red-500">Élève introuvable</p>;
 
   return (
-    <div className="bg-gray-50 mt-10 w-full dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen p-4 md:p-8 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
       {/* Bouton retour */}
       <button
         onClick={() => navigate("/eleves")}
@@ -45,11 +48,11 @@ const DetailEleve = () => {
         ← Retour
       </button>
 
-      {/* En-tête */}
-      <div className="flex flex-col md:flex-row items-center md:items-start md:space-x-6 bg-gray-100 dark:bg-gray-800 p-4 rounded-2xl shadow">
+      {/* En-tête élève */}
+      <div className="flex flex-col md:flex-row items-center md:items-start md:space-x-6 bg-gray-100 dark:bg-gray-800 p-4 rounded-2xl shadow mb-6">
         {eleve.photo && (
           <img
-            src={`https://schoolelite.onrender.com${eleve.photo}`}
+            src={`${eleve.photo}`}
             alt="photo élève"
             className="w-24 h-24 rounded-full object-cover mb-4 md:mb-0"
           />
@@ -66,36 +69,35 @@ const DetailEleve = () => {
       </div>
 
       {/* Parcours scolaire */}
-      <div>
+      <div className="mb-6">
         <h2 className="text-xl font-semibold mb-3">Parcours scolaire</h2>
+        {/* Desktop */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full table-fixed bg-gray-100 dark:bg-gray-800 rounded-2xl shadow">
+            <thead>
+              <tr className="bg-gray-200 dark:bg-gray-700">
+                <th className="px-4 py-2 text-left">Classe</th>
+                <th className="px-4 py-2 text-left">Année scolaire</th>
+                <th className="px-4 py-2 text-left">Date inscription</th>
+                <th className="px-4 py-2 text-left">Date sortie</th>
+                <th className="px-4 py-2 text-left">Type</th>
+              </tr>
+            </thead>
+            <tbody>
+              {eleve.parcours.map((p) => (
+                <tr key={p._id} className="border-b border-gray-300 dark:border-gray-600">
+                  <td className="px-4 py-2">{p.classeId.nom}</td>
+                  <td className="px-4 py-2">{p.anneeScolaireId?.libelle || "-"}</td>
+                  <td className="px-4 py-2">{new Date(p.dateInscription).toLocaleDateString("fr-FR")}</td>
+                  <td className="px-4 py-2">{p.dateSortie ? new Date(p.dateSortie).toLocaleDateString("fr-FR") : "-"}</td>
+                  <td className="px-4 py-2">{p.typeInscription}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-        {/* Desktop: tableau */}
-       <div className="hidden md:block overflow-x-auto">
-  <table className="w-full table-fixed bg-gray-100 dark:bg-gray-800 rounded-2xl shadow">
-    <thead>
-      <tr className="bg-gray-200 dark:bg-gray-700">
-        <th className="w-1/5 px-4 py-2 text-left">Classe</th>
-        <th className="w-1/5 px-4 py-2 text-left">Année scolaire</th>
-        <th className="w-1/5 px-4 py-2 text-left">Date inscription</th>
-        <th className="w-1/5 px-4 py-2 text-left">Date sortie</th>
-        <th className="w-1/5 px-4 py-2 text-left">Type</th>
-      </tr>
-    </thead>
-    <tbody>
-      {eleve.parcours.map((p) => (
-        <tr key={p._id} className="border-b border-gray-300 dark:border-gray-600">
-          <td className="px-4 py-2">{p.classeId.nom}</td>
-          <td className="px-4 py-2">{p.anneeScolaireId?.libelle || "-"}</td>
-          <td className="px-4 py-2">{new Date(p.dateInscription).toLocaleDateString("fr-FR")}</td>
-          <td className="px-4 py-2">{p.dateSortie ? new Date(p.dateSortie).toLocaleDateString("fr-FR") : "-"}</td>
-          <td className="px-4 py-2">{p.typeInscription}</td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</div>
-
-        {/* Mobile: cartes */}
+        {/* Mobile */}
         <div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
           {eleve.parcours.map((p) => (
             <div key={p._id} className="bg-gray-100 dark:bg-gray-800 rounded-2xl shadow p-4">
@@ -110,7 +112,7 @@ const DetailEleve = () => {
       </div>
 
       {/* Paiements */}
-      <div>
+      <div className="mb-6">
         <h2 className="text-xl font-semibold mb-3">Paiements</h2>
         {paiements.length ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -136,7 +138,7 @@ const DetailEleve = () => {
       </div>
 
       {/* Notes */}
-      <div>
+      <div className="mb-6">
         <h2 className="text-xl font-semibold mb-3">Notes</h2>
         {notes.length ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
