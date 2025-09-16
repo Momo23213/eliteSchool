@@ -53,16 +53,34 @@ const Messagerie = () => {
         console.log('Message reçu via Socket.IO:', message);
         console.log('Conversation active actuelle:', activeConversation);
         
-        // Ajouter le message reçu aux messages actuels
-        setMessages(prev => {
-          const exists = prev.some(m => m._id === message._id);
-          if (!exists) {
-            console.log('Ajout du nouveau message reçu');
-            return [...prev, message];
+        // Vérifier si le message appartient à la conversation active
+        if (activeConversation) {
+          let shouldAddMessage = false;
+          
+          if (message.type === 'private' && activeConversation.type === 'private') {
+            // Pour les messages privés, vérifier les participants
+            const userId = user?.id || user?._id;
+            const messageFromParticipant = activeConversation.participants.some(p => 
+              p._id === message.expediteur?._id || p._id === message.expediteur
+            );
+            shouldAddMessage = messageFromParticipant;
+          } else if (message.type === 'group' && activeConversation.type === 'group') {
+            // Pour les messages de groupe, vérifier l'ID de la classe
+            shouldAddMessage = message.classeId === activeConversation._id;
           }
-          console.log('Message déjà existant, ignoré');
-          return prev;
-        });
+          
+          if (shouldAddMessage) {
+            setMessages(prev => {
+              const exists = prev.some(m => m._id === message._id);
+              if (!exists) {
+                console.log('Ajout du nouveau message à la conversation active');
+                return [...prev, message];
+              }
+              console.log('Message déjà existant, ignoré');
+              return prev;
+            });
+          }
+        }
         
         // Mettre à jour la liste des conversations
         fetchConversations();
@@ -110,24 +128,40 @@ const Messagerie = () => {
     try {
       // Récupérer les classes selon le rôle de l'utilisateur
       let classes = [];
+      console.log('Chargement des groupes pour utilisateur:', user);
+      
       if (user.role === 'eleve') {
-        // Pour un élève, récupérer sa classe
-        const classeData = await classeService.getById(user.classeId);
-        classes = [classeData];
+        // Pour un élève, récupérer UNIQUEMENT sa classe assignée
+        if (user.classeId) {
+          console.log('Récupération de la classe de l\'\u00e9lève:', user.classeId);
+          const classeData = await classeService.getById(user.classeId);
+          if (classeData) {
+            classes = [classeData];
+            console.log('Classe de l\'\u00e9lève chargée:', classeData);
+          }
+        } else {
+          console.log('Aucune classe assignée à cet élève');
+        }
       } else if (user.role === 'enseignant') {
         // Pour un enseignant, récupérer toutes les classes où il enseigne
         const allClasses = await classeService.getAll();
         classes = allClasses.filter(classe => 
-          classe.enseignants?.some(ens => ens._id === user._id)
+          classe.enseignants?.some(ens => ens._id === (user._id || user.id))
         );
+        console.log('Classes de l\'enseignant:', classes);
       } else if (user.role === 'admin') {
         // Pour un admin, toutes les classes
         classes = await classeService.getAll();
+        console.log('Toutes les classes pour admin:', classes);
       }
       
-      setClassGroups(classes);
+      // Filtrer les classes null ou undefined
+      const validClasses = classes.filter(classe => classe && classe._id);
+      setClassGroups(validClasses);
+      console.log('Groupes de classe définis:', validClasses);
     } catch (error) {
       console.error('Erreur lors du chargement des groupes:', error);
+      setClassGroups([]);
     }
   };
 
@@ -164,17 +198,28 @@ const Messagerie = () => {
       if (conversation.type === 'private') {
         const userId = user?.id || user?._id;
         const otherUserId = conversation.participants.find(p => p._id !== userId)?._id;
-        console.log('Debug fetchMessages - user:', user, 'userId:', userId, 'otherUserId:', otherUserId);
+        console.log('Chargement messages privés - userId:', userId, 'otherUserId:', otherUserId);
         if (!userId || !otherUserId) {
-          console.log('IDs manquants pour charger les messages privés - userId:', userId, 'otherUserId:', otherUserId);
+          console.log('IDs manquants pour charger les messages privés');
           setMessages([]);
           return;
         }
         data = await messageService.getPrivateMessages(userId, otherUserId);
-      } else {
+      } else if (conversation.type === 'group') {
+        console.log('Chargement messages de groupe pour classe:', conversation._id);
         data = await messageService.getGroupMessages(conversation._id);
+        console.log('Messages de groupe chargés:', data);
       }
-      setMessages(data || []);
+      
+      // Formater les messages pour l'affichage
+      const formattedMessages = (data || []).map(message => ({
+        ...message,
+        expediteurNom: message.expediteur?.nom || message.expediteur?.prenom || 'Utilisateur',
+        expediteur: message.expediteur?._id || message.expediteur
+      }));
+      
+      setMessages(formattedMessages);
+      console.log('Messages formatés définis:', formattedMessages);
     } catch (error) {
       console.error('Erreur lors du chargement des messages:', error);
       setMessages([]);
@@ -202,6 +247,7 @@ const Messagerie = () => {
   };
 
   const handleGroupClick = (classe) => {
+    console.log('Sélection du groupe classe:', classe);
     const groupConversation = {
       _id: classe._id,
       type: 'group',
@@ -212,6 +258,7 @@ const Messagerie = () => {
     setActiveConversation(groupConversation);
     fetchMessages(groupConversation);
     
+    console.log('Rejoindre groupe classe via Socket:', classe._id);
     socketService.joinClassGroup(classe._id);
   };
 
@@ -256,11 +303,12 @@ const Messagerie = () => {
         });
         
         socketService.sendGroupMessage({
-          expediteur: user._id,
+          expediteur: user._id || user.id,
           classeId: activeConversation._id,
           contenu: messageData.contenu,
           messageId: sentMessage._id,
-          expediteurData: user
+          expediteurData: user,
+          classeId: activeConversation._id
         });
       }
 

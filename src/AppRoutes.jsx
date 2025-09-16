@@ -19,6 +19,7 @@ import NotFound from "./pages/NotFound";
 import Emploidutemps from "./pages/Emploidutemps";
 import Messagerie from "./pages/Messagerie";
 import DashbordEleve from "./pages/eleves/DashbordEleve";
+import DashbordEnseignant from "./pages/enseignant/DashbordEnseignant";
 function Layout() {
   const location = useLocation();
   
@@ -40,6 +41,7 @@ function Layout() {
     "/controleScolaire",
     "/fraiScolaire",
     "/paiements",
+    "/teacher/dashboard",
     "/eleve/dashboard"
   ];
   
@@ -108,6 +110,13 @@ function Layout() {
            <PrivateRoute roles={["admin"]}><Paiements /></PrivateRoute>
           }/>
 
+
+        {/* Enseignant */}
+         <Route path="/teacher/dashboard" element={
+           <PrivateRoute roles={["enseignant"]}><DashbordEnseignant /></PrivateRoute>
+          }/>
+
+         {/* Eleves */}
          <Route path="/eleve/dashboard" element={
            <PrivateRoute roles={["eleve"]}><DashbordEleve /></PrivateRoute>
           }/>
