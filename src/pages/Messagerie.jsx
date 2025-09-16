@@ -40,18 +40,27 @@ const Messagerie = () => {
 
   // Charger les conversations et groupes de classe
   useEffect(() => {
-    fetchConversations();
-    fetchClassGroups();
-    fetchAvailableUsers();
-    
     if (user) {
+      console.log('Chargement initial des données pour utilisateur:', user);
+      fetchConversations();
+      fetchClassGroups();
+      fetchAvailableUsers();
+      
       socketService.connect();
+      
+      // Configuration de la réception des messages en temps réel
       socketService.onReceiveMessage((message) => {
+        console.log('Message reçu via Socket.IO:', message);
+        console.log('Conversation active actuelle:', activeConversation);
+        
+        // Ajouter le message reçu aux messages actuels
         setMessages(prev => {
           const exists = prev.some(m => m._id === message._id);
           if (!exists) {
+            console.log('Ajout du nouveau message reçu');
             return [...prev, message];
           }
+          console.log('Message déjà existant, ignoré');
           return prev;
         });
         
@@ -65,7 +74,7 @@ const Messagerie = () => {
       socketService.offReceiveMessage();
       socketService.disconnect();
     };
-  }, [user]);
+  }, [user, activeConversation]);
 
   // Auto-scroll vers le bas des messages
   useEffect(() => {
@@ -85,41 +94,13 @@ const Messagerie = () => {
         return;
       }
       
+      console.log('Tentative de chargement des conversations pour userId:', userId);
       const data = await messageService.getConversations(userId);
-      console.log('Conversations chargées:', data);
-      setConversations(data);
+      console.log('Conversations chargées depuis API:', data);
+      setConversations(data || []);
     } catch (error) {
       console.error('Erreur lors du chargement des conversations:', error);
-      // En mode démo, créer quelques conversations d'exemple
-      const demoConversations = [
-        {
-          _id: `private_${user?.id || user?._id}_demo-1`,
-          type: 'private',
-          participants: [
-            { ...user, _id: user?.id || user?._id },
-            { _id: 'demo-1', nom: 'Martin', prenom: 'Sophie', email: 'sophie.martin@school.com', role: 'enseignant' }
-          ],
-          lastMessage: {
-            contenu: 'Bonjour, comment allez-vous ?',
-            createdAt: new Date(Date.now() - 3600000) // Il y a 1 heure
-          },
-          updatedAt: new Date(Date.now() - 3600000)
-        },
-        {
-          _id: `private_${user?.id || user?._id}_demo-2`,
-          type: 'private',
-          participants: [
-            { ...user, _id: user?.id || user?._id },
-            { _id: 'demo-2', nom: 'Dubois', prenom: 'Pierre', email: 'pierre.dubois@school.com', role: 'eleve' }
-          ],
-          lastMessage: {
-            contenu: 'Merci pour votre aide !',
-            createdAt: new Date(Date.now() - 7200000) // Il y a 2 heures
-          },
-          updatedAt: new Date(Date.now() - 7200000)
-        }
-      ];
-      setConversations(demoConversations);
+      setConversations([]);
     } finally {
       setLoading(false);
     }
@@ -165,32 +146,14 @@ const Messagerie = () => {
       ]);
       
       // Combiner et filtrer l'utilisateur actuel
-      const allUsers = [...enseignants, ...eleves].filter(u => u._id !== user?._id);
+      const allUsers = [...enseignants, ...eleves];
+      const userId = user?.id || user?._id;
+      const filteredUsers = allUsers.filter(u => u._id !== userId);
       
-      if (allUsers.length > 0) {
-        setAvailableUsers(allUsers);
-      } else {
-        // Utilisateurs de démonstration si les API ne fonctionnent pas
-        setAvailableUsers([
-          { _id: 'demo-1', nom: 'Dupont', prenom: 'Marie', email: 'marie.dupont@school.com', role: 'enseignant' },
-          { _id: 'demo-2', nom: 'Martin', prenom: 'Pierre', email: 'pierre.martin@school.com', role: 'eleve' },
-          { _id: 'demo-3', nom: 'Bernard', prenom: 'Sophie', email: 'sophie.bernard@school.com', role: 'enseignant' },
-          { _id: 'demo-4', nom: 'Durand', prenom: 'Lucas', email: 'lucas.durand@school.com', role: 'eleve' },
-          { _id: 'demo-5', nom: 'Moreau', prenom: 'Julie', email: 'julie.moreau@school.com', role: 'eleve' },
-          { _id: 'demo-6', nom: 'Leroy', prenom: 'Antoine', email: 'antoine.leroy@school.com', role: 'enseignant' }
-        ]);
-      }
+      setAvailableUsers(filteredUsers);
     } catch (error) {
       console.error('Erreur lors du chargement des utilisateurs:', error);
-      // Utilisateurs de démonstration en cas d'erreur
-      setAvailableUsers([
-        { _id: 'demo-1', nom: 'Dupont', prenom: 'Marie', email: 'marie.dupont@school.com', role: 'enseignant' },
-        { _id: 'demo-2', nom: 'Martin', prenom: 'Pierre', email: 'pierre.martin@school.com', role: 'eleve' },
-        { _id: 'demo-3', nom: 'Bernard', prenom: 'Sophie', email: 'sophie.bernard@school.com', role: 'enseignant' },
-        { _id: 'demo-4', nom: 'Durand', prenom: 'Lucas', email: 'lucas.durand@school.com', role: 'eleve' },
-        { _id: 'demo-5', nom: 'Moreau', prenom: 'Julie', email: 'julie.moreau@school.com', role: 'eleve' },
-        { _id: 'demo-6', nom: 'Leroy', prenom: 'Antoine', email: 'antoine.leroy@school.com', role: 'enseignant' }
-      ]);
+      setAvailableUsers([]);
     }
   };
 
@@ -211,50 +174,30 @@ const Messagerie = () => {
       } else {
         data = await messageService.getGroupMessages(conversation._id);
       }
-      setMessages(data);
+      setMessages(data || []);
     } catch (error) {
       console.error('Erreur lors du chargement des messages:', error);
-      // En mode démo, créer des messages d'exemple pour cette conversation
-      if (conversation.type === 'private') {
-        const userId = user?.id || user?._id;
-        const otherUser = conversation.participants.find(p => p._id !== userId);
-        const demoMessages = [
-          {
-            _id: 'demo-msg-1',
-            contenu: 'Bonjour ! Comment allez-vous ?',
-            expediteur: otherUser?._id,
-            expediteurNom: `${otherUser?.prenom} ${otherUser?.nom}`,
-            createdAt: new Date(Date.now() - 3600000),
-            type: 'private'
-          },
-          {
-            _id: 'demo-msg-2',
-            contenu: 'Très bien merci ! Et vous ?',
-            expediteur: userId,
-            expediteurNom: user?.nom || user?.prenom || 'Vous',
-            createdAt: new Date(Date.now() - 3000000),
-            type: 'private'
-          }
-        ];
-        setMessages(demoMessages);
-      } else {
-        setMessages([]);
-      }
+      setMessages([]);
     } finally {
       setLoadingMessages(false);
     }
   };
 
   const handleConversationClick = (conversation) => {
+    console.log('Sélection de conversation:', conversation);
     setActiveConversation(conversation);
     fetchMessages(conversation);
     
     if (conversation.type === 'private') {
       const userId = user?.id || user?._id;
       const otherUserId = conversation.participants.find(p => p._id !== userId)?._id;
+      console.log('Rejoindre conversation privée - userId:', userId, 'otherUserId:', otherUserId);
       if (userId && otherUserId) {
         socketService.joinPrivateConversation(userId, otherUserId);
       }
+    } else if (conversation.type === 'group') {
+      console.log('Rejoindre groupe classe:', conversation._id);
+      socketService.joinClassGroup(conversation._id);
     }
   };
 
@@ -323,7 +266,7 @@ const Messagerie = () => {
 
       // Ajouter le message localement pour un affichage immédiat
       const localMessage = {
-        _id: Date.now().toString(),
+        _id: sentMessage._id || Date.now().toString(),
         contenu: messageData.contenu,
         expediteur: messageData.expediteur,
         expediteurNom: messageData.expediteurNom,
@@ -331,7 +274,13 @@ const Messagerie = () => {
         type: activeConversation.type
       };
       
-      setMessages(prev => [...prev, localMessage]);
+      setMessages(prev => {
+        const exists = prev.some(m => m._id === localMessage._id);
+        if (!exists) {
+          return [...prev, localMessage];
+        }
+        return prev;
+      });
 
       // Mettre à jour la conversation avec le dernier message
       setConversations(prev => prev.map(conv => 
@@ -501,7 +450,12 @@ const Messagerie = () => {
           {activeTab === 'private' ? (
             // Conversations privées
             <div className="p-2">
-              {filteredConversations.length === 0 ? (
+              {loading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Chargement des conversations...</p>
+                </div>
+              ) : filteredConversations.length === 0 ? (
                 <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                   <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
                   <p>Aucune conversation</p>

@@ -18,6 +18,7 @@ import DetailEleve from "./components/eleves/DetailEleve";
 import NotFound from "./pages/NotFound";
 import Emploidutemps from "./pages/Emploidutemps";
 import Messagerie from "./pages/Messagerie";
+import DashbordEleve from "./pages/eleves/DashbordEleve";
 function Layout() {
   const location = useLocation();
   
@@ -38,7 +39,8 @@ function Layout() {
     "/setting",
     "/controleScolaire",
     "/fraiScolaire",
-    "/paiements"
+    "/paiements",
+    "/eleve/dashboard"
   ];
   
   // Vérifier si la route actuelle correspond à une route définie
@@ -104,6 +106,10 @@ function Layout() {
           }/>
          <Route path="/paiements" element={
            <PrivateRoute roles={["admin"]}><Paiements /></PrivateRoute>
+          }/>
+
+         <Route path="/eleve/dashboard" element={
+           <PrivateRoute roles={["eleve"]}><DashbordEleve /></PrivateRoute>
           }/>
 
           {/* Catch all - 404 Page */}
