@@ -15,6 +15,7 @@ import PaiementControles from "./pages/admin/PaiementControles";
 import PaiementFrais from "./pages/admin/PaiementFrais";
 import Paiements from "./pages/admin/Paiements";
 import DetailEleve from "./components/eleves/DetailEleve";
+import NotFound from "./pages/NotFound";
 function Layout() {
   const location = useLocation();
   const cache = location.pathname === "/";
@@ -67,6 +68,9 @@ function Layout() {
          <Route path="/paiements" element={
            <PrivateRoute roles={["admin"]}><Paiements /></PrivateRoute>
           }/>
+
+          {/* Catch all - 404 Page */}
+          <Route path="*" element={<NotFound />} />
 </Routes>
       </div>
     </div>

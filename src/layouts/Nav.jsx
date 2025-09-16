@@ -1,6 +1,6 @@
 // src/components/Navbar.tsx
 import { useState, useEffect } from 'react';
-import { Navigate, NavLink } from 'react-router-dom';
+import { Navigate, NavLink, useNavigate } from 'react-router-dom';
 import {
   Menu, X, Home, Users, BookOpen, Book, GraduationCap, DollarSign, User, Sun, Moon,
   LogOut, Calendar, ChevronDown, WalletCards,
@@ -10,13 +10,13 @@ import {
   School
 } from 'lucide-react';
 import "../styles/animations.css";
-// import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 
 
 
 const Navbar = () => {
-  // const { user, logout } = useAuth();
-  const user={role:"admin"}
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(
@@ -29,6 +29,11 @@ const Navbar = () => {
   // ------------------------------
   let navGroups = [];
   let navMobileLinks = [];
+
+  // Vérifier si l'utilisateur existe avant d'accéder à ses propriétés
+  if (!user) {
+    return null; // ou un composant de chargement
+  }
 
   if (user.role === 'admin') {
     navGroups = [
@@ -189,8 +194,8 @@ const Navbar = () => {
   // ------------------------------
   const handleLogout = () => {
     if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-       logout();
-      <Navigate to="/" />;
+      logout();
+      navigate('/');
     }
   };
 
