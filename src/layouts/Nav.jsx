@@ -69,7 +69,8 @@ const Navbar = () => {
           { name: "Contrôle Scolaire", path: "/controleScolaire", icon: DollarSign },
           { name: "Frai Scolaire", path: "/fraiScolaire", icon: WalletCards },
           { name: "Calendrier", path: "/calendrier", icon: Calendar },
-          { name: "Emploi du temps", path: "/emploi-du-temps", icon: Calendar }
+          { name: "Emploi du temps", path: "/emploi-du-temps", icon: Calendar },
+          { name: "Messagerie", path: "/messageries", icon: MessageCircle }
         ]
       },
       {
@@ -93,6 +94,7 @@ const Navbar = () => {
       { name: "Paiements", path: "/paiements", icon: DollarSign },
       { name: "Calendrier", path: "/calendrier", icon: Calendar },
       { name: "Emploi du temps", path: "/emploi-du-temps", icon: Calendar },
+      { name: "Messagerie", path: "/messageries", icon: MessageCircle },
       { name: "Mon Ecole", path: "/setting", icon: School },
     ];
   }
@@ -110,7 +112,7 @@ const Navbar = () => {
         items: [
           { name: "Mes Classes", path: "/mes-classes", icon: GraduationCap },
           { name: "Emploi du temps", path: "/emploi-du-temps", icon: Calendar },
-          { name: "Message", path: "/profil", icon: MessageCircle },
+          { name: "Messagerie", path: "/messageries", icon: MessageCircle },
         ]
       },
       {
@@ -134,7 +136,7 @@ const Navbar = () => {
       { name: "Emploi du temps", path: "/emploi-du-temps", icon: Calendar },
       { name: "Saisie Notes", path: "/notes/saisie", icon: BookOpen },
       { name: "Résultats", path: "/notes/resultats", icon: BookOpen },
-      { name: "Message", path: "/profil", icon: MessageCircle },
+      { name: "Messagerie", path: "/messageries", icon: MessageCircle },
       { name: "Profil", path: "/profil", icon: User },
     ];
   }
@@ -152,7 +154,7 @@ const Navbar = () => {
         items: [
           { name: "Emploi du temps", path: "/emploi-du-temps", icon: Calendar },
           { name: "Calendrier", path: "/calendrier", icon: Calendar },
-          { name: "Message", path: "/profil", icon: MessageCircle },
+          { name: "Messagerie", path: "/messageries", icon: MessageCircle },
         ]
       },
       {
@@ -184,7 +186,7 @@ const Navbar = () => {
       { name: "Mes Notes", path: "/notes", icon: BookOpen },
       { name: "Résultats", path: "/notes/resultats", icon: BookOpen },
       { name: "Historique Paiements", path: "/historique", icon: DollarSign },
-      { name: "Message", path: "/profil", icon: MessageCircle },
+      { name: "Messagerie", path: "/messageries", icon: MessageCircle },
       { name: "Profil", path: "/profil", icon: User },
     ];
   }
@@ -338,6 +340,20 @@ const Navbar = () => {
                 {link.name}
               </NavLink>
             ))}
+            
+            {/* Bouton de déconnexion pour mobile */}
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  handleLogout();
+                }}
+                className="flex items-center gap-2 w-full px-4 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-red-500 to-pink-600 text-white hover:from-red-600 hover:to-pink-700 transition-all duration-300 hover:scale-105 shadow-lg"
+              >
+                <LogOut size={20} />
+                Se déconnecter
+              </button>
+            </div>
           </div>
         </div>
       </div>

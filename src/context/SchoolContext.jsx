@@ -26,19 +26,20 @@ export const SchoolProvider = ({ children }) => {
     async function fetchInitialData() {
       setLoading(true);
       try {
-        const [classesData, anneeData, matieresData, enseignantsData, annesActiveData] = await Promise.all([
+        // Désactiver temporairement anneeService car la route /api/annees n'existe pas en production
+        const [classesData, matieresData, enseignantsData] = await Promise.all([
           classeService.getAll(),
-          anneeService.getAll(),
           matiereService.getAll(),
           enseignantService.getAll(),
-          anneeService.getAll(),
         ]);
 
         setClasses(classesData);
-        setAnnes(anneeData);
         setMatieres(matieresData);
         setEnseignants(enseignantsData);
-        setAnnesActive(annesActiveData);
+        
+        // Valeurs par défaut pour les années scolaires
+        setAnnes([]);
+        setAnnesActive([]);
       } catch (error) {
         console.error("Erreur lors du chargement des données :", error);
       } finally {

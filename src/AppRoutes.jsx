@@ -1,4 +1,4 @@
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Route, Routes, useLocation, matchPath } from "react-router-dom";
 import Login from "./components/Login";
 import Navbar from "./layouts/Nav";
 import PrivateRoute from "./components/ProtegeRoute";
@@ -16,17 +16,54 @@ import PaiementFrais from "./pages/admin/PaiementFrais";
 import Paiements from "./pages/admin/Paiements";
 import DetailEleve from "./components/eleves/DetailEleve";
 import NotFound from "./pages/NotFound";
+import Emploidutemps from "./pages/Emploidutemps";
+import Messagerie from "./pages/Messagerie";
 function Layout() {
   const location = useLocation();
-  const cache = location.pathname === "/";
+  
+  // Liste des routes définies dans l'application
+  const definedRoutes = [
+    "/",
+    "/emploi-du-temps",
+    "/messageries",
+    "/admin/dashboard",
+    "/notes",
+    "/eleves",
+    "/eleves/detail/:id",
+    "/enseignants",
+    "/matieres",
+    "/classes",
+    "/notes_saisie",
+    "/notes_resultats",
+    "/setting",
+    "/controleScolaire",
+    "/fraiScolaire",
+    "/paiements"
+  ];
+  
+  // Vérifier si la route actuelle correspond à une route définie
+  const isDefinedRoute = definedRoutes.some(route => {
+    if (route.includes(':')) {
+      // Pour les routes avec paramètres, utiliser matchPath
+      return matchPath({ path: route, exact: true }, location.pathname);
+    }
+    return location.pathname === route;
+  });
+  
+  // Cacher la navbar sur la page de login et les pages 404
+  const hideNavbar = location.pathname === "/" || !isDefinedRoute;
   
   return (
     <div>
-      {!cache && <Navbar/>}
+      {!hideNavbar && <Navbar/>}
       <div>
       <Routes>
   {/* Public */}
        <Route path="/" element={<Login />} />
+       <Route path="/emploi-du-temps" element={<Emploidutemps />} />
+       <Route path="/messageries" element={
+         <PrivateRoute roles={["admin", "enseignant", "eleve"]}><Messagerie /></PrivateRoute>
+        }/>
 
   {/* Admin */}
          <Route path="/admin/dashboard" element={
