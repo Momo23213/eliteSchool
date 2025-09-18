@@ -10,7 +10,12 @@ import {
   faEnvelope,
   faPhone,
   faCalendar,
-  faBook
+  faBook,
+  faUserPlus,
+  faChalkboardTeacher,
+  faSpinner,
+  faUsers,
+  faBookOpen
 } from '@fortawesome/free-solid-svg-icons';
 import "../../styles/animations.css";
 
@@ -30,9 +35,19 @@ function EnseignantsPage() {
     matieres: [],
     classe: [],
   });
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [assigningTeacher, setAssigningTeacher] = useState(null);
+  const [showClassModal, setShowClassModal] = useState(false);
+  const [showMatiereModal, setShowMatiereModal] = useState(false);
+  const [assigningClassTeacher, setAssigningClassTeacher] = useState(null);
+  const [assigningMatiereTeacher, setAssigningMatiereTeacher] = useState(null);
+  const [classes, setClasses] = useState([]);
+  const [matieres, setMatieres] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // fetch teachers
   const fetchTeachers = async () => {
+    setLoading(true);
     try {
       const res = await fetch(API_BASE);
       if (!res.ok) throw new Error('Erreur réseau');
@@ -42,12 +57,109 @@ function EnseignantsPage() {
     } catch (e) {
       setTeachers([]);
       console.error('Fetch enseignants failed', e);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchTeachers();
+    fetchClasses();
+    fetchMatieres();
   }, []);
+
+  const fetchClasses = async () => {
+    try {
+      const res = await fetch('https://schoolelite.onrender.com/api/classes');
+      if (res.ok) {
+        const data = await res.json();
+        setClasses(data);
+      }
+    } catch (e) {
+      console.error('Erreur chargement classes:', e);
+    }
+  };
+
+  const fetchMatieres = async () => {
+    try {
+      const res = await fetch('https://schoolelite.onrender.com/api/matieres/afiches');
+      if (res.ok) {
+        const data = await res.json();
+        setMatieres(data);
+      }
+    } catch (e) {
+      console.error('Erreur chargement matières:', e);
+    }
+  };
+
+  const handleAssignTeacher = (teacher) => {
+    setAssigningTeacher({ ...teacher });
+    setShowAssignModal(true);
+  };
+
+  const handleAssignToClass = (teacher) => {
+    setAssigningClassTeacher({ ...teacher });
+    setShowClassModal(true);
+  };
+
+  const handleAssignToMatiere = (teacher) => {
+    setAssigningMatiereTeacher({ ...teacher });
+    setShowMatiereModal(true);
+  };
+
+  const handleSaveClassAssignment = async () => {
+    if (!assigningClassTeacher) return;
+    try {
+      const res = await fetch(`${API_BASE}/${assigningClassTeacher._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nom: assigningClassTeacher.nom,
+          prenom: assigningClassTeacher.prenom,
+          email: assigningClassTeacher.email,
+          telephone: assigningClassTeacher.telephone,
+          classe: assigningClassTeacher.classe || [],
+          matieres: assigningClassTeacher.matieres || []
+        }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setTeachers(prev => prev.map(t => t._id === assigningClassTeacher._id ? updated : t));
+        setShowClassModal(false);
+        setAssigningClassTeacher(null);
+      }
+    } catch (e) {
+      console.error('Erreur affectation classe:', e);
+      alert('Erreur lors de l\'affectation à la classe');
+    }
+  };
+
+  const handleSaveMatiereAssignment = async () => {
+    if (!assigningMatiereTeacher) return;
+    try {
+      const res = await fetch(`${API_BASE}/${assigningMatiereTeacher._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nom: assigningMatiereTeacher.nom,
+          prenom: assigningMatiereTeacher.prenom,
+          email: assigningMatiereTeacher.email,
+          telephone: assigningMatiereTeacher.telephone,
+          classe: assigningMatiereTeacher.classe || [],
+          matieres: assigningMatiereTeacher.matieres || []
+        }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setTeachers(prev => prev.map(t => t._id === assigningMatiereTeacher._id ? updated : t));
+        setShowMatiereModal(false);
+        setAssigningMatiereTeacher(null);
+      }
+    } catch (e) {
+      console.error('Erreur affectation matière:', e);
+      alert('Erreur lors de l\'affectation à la matière');
+    }
+  };
 
   // create
   const handleAddTeacher = async () => {
@@ -197,8 +309,16 @@ function EnseignantsPage() {
         </div>
 
         {/* Liste des enseignants */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredTeachers.map((teacher, index) => (
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="text-center">
+              <FontAwesomeIcon icon={faSpinner} spin className="text-4xl text-blue-600 mb-4" />
+              <p className="text-lg text-gray-600 dark:text-gray-400">Chargement des enseignants...</p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredTeachers.map((teacher, index) => (
             <div
               key={teacher._id}
               className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-6 hover:shadow-2xl transition-all duration-300 transform hover:scale-105 animate-card-delay hover-lift"
@@ -218,7 +338,21 @@ function EnseignantsPage() {
                     </span>
                   </div>
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex space-x-1">
+                  <button
+                    onClick={() => handleAssignToClass(teacher)}
+                    className="p-2 text-green-600 hover:bg-gradient-to-r hover:from-green-100 hover:to-emerald-100 dark:hover:from-green-900 dark:hover:to-emerald-900 rounded-xl transition-all duration-300 transform hover:scale-110 hover-lift"
+                    title="Affecter à une classe"
+                  >
+                    <FontAwesomeIcon icon={faUsers} />
+                  </button>
+                  <button
+                    onClick={() => handleAssignToMatiere(teacher)}
+                    className="p-2 text-orange-600 hover:bg-gradient-to-r hover:from-orange-100 hover:to-red-100 dark:hover:from-orange-900 dark:hover:to-red-900 rounded-xl transition-all duration-300 transform hover:scale-110 hover-lift"
+                    title="Affecter à une matière"
+                  >
+                    <FontAwesomeIcon icon={faBookOpen} />
+                  </button>
                   <button
                     onClick={() => { setEditingTeacher(teacher); setShowEditModal(true); }}
                     className="p-2 text-blue-600 hover:bg-gradient-to-r hover:from-blue-100 hover:to-purple-100 dark:hover:from-blue-900 dark:hover:to-purple-900 rounded-xl transition-all duration-300 transform hover:scale-110 hover-lift"
@@ -269,8 +403,9 @@ function EnseignantsPage() {
                 )}
               </div>
             </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Modal d'ajout */}
         {showAddModal && (
@@ -386,6 +521,209 @@ function EnseignantsPage() {
                 <button
                   onClick={handleEditTeacher}
                   className="px-6 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-xl hover:from-green-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl hover-lift"
+                >
+                  Enregistrer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal d'affectation */}
+        {showAssignModal && assigningTeacher && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+            <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl p-8 w-full max-w-lg mx-4 shadow-2xl border border-gray-200/50 dark:border-gray-700/50 animate-scale-in">
+              <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent flex items-center">
+                <FontAwesomeIcon icon={faChalkboardTeacher} className="mr-3 text-green-600" />
+                Affecter {assigningTeacher.prenom} {assigningTeacher.nom}
+              </h2>
+              
+              <div className="space-y-6">
+                {/* Sélection des classes */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Classes assignées</label>
+                  <div className="max-h-32 overflow-y-auto border border-gray-300/50 dark:border-gray-600/50 rounded-xl p-3 bg-white/50 dark:bg-gray-700/50">
+                    {classes.map((classe) => (
+                      <label key={classe._id} className="flex items-center space-x-2 py-1">
+                        <input
+                          type="checkbox"
+                          checked={(assigningTeacher.classe || []).includes(classe._id)}
+                          onChange={(e) => {
+                            const currentClasses = assigningTeacher.classe || [];
+                            if (e.target.checked) {
+                              setAssigningTeacher({
+                                ...assigningTeacher,
+                                classe: [...currentClasses, classe._id]
+                              });
+                            } else {
+                              setAssigningTeacher({
+                                ...assigningTeacher,
+                                classe: currentClasses.filter(id => id !== classe._id)
+                              });
+                            }
+                          }}
+                          className="rounded text-green-600 focus:ring-green-500"
+                        />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">{classe.nom}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Sélection des matières */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Matières enseignées</label>
+                  <div className="max-h-32 overflow-y-auto border border-gray-300/50 dark:border-gray-600/50 rounded-xl p-3 bg-white/50 dark:bg-gray-700/50">
+                    {matieres.map((matiere) => (
+                      <label key={matiere._id} className="flex items-center space-x-2 py-1">
+                        <input
+                          type="checkbox"
+                          checked={(assigningTeacher.matieres || []).includes(matiere._id)}
+                          onChange={(e) => {
+                            const currentMatieres = assigningTeacher.matieres || [];
+                            if (e.target.checked) {
+                              setAssigningTeacher({
+                                ...assigningTeacher,
+                                matieres: [...currentMatieres, matiere._id]
+                              });
+                            } else {
+                              setAssigningTeacher({
+                                ...assigningTeacher,
+                                matieres: currentMatieres.filter(id => id !== matiere._id)
+                              });
+                            }
+                          }}
+                          className="rounded text-green-600 focus:ring-green-500"
+                        />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">{matiere.nom}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-8">
+                <button
+                  onClick={() => { setShowAssignModal(false); setAssigningTeacher(null); }}
+                  className="px-6 py-3 text-gray-600 dark:text-gray-400 hover:bg-gradient-to-r hover:from-gray-100 hover:to-gray-200 dark:hover:from-gray-700 dark:hover:to-gray-600 rounded-xl transition-all duration-300 transform hover:scale-105 hover-lift"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleSaveAssignment}
+                  className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl hover-lift"
+                >
+                  Enregistrer l'affectation
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal d'affectation aux classes */}
+        {showClassModal && assigningClassTeacher && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+            <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl p-8 w-full max-w-lg mx-4 shadow-2xl border border-gray-200/50 dark:border-gray-700/50 animate-scale-in">
+              <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent flex items-center">
+                <FontAwesomeIcon icon={faUsers} className="mr-3 text-green-600" />
+                Affecter {assigningClassTeacher.prenom} {assigningClassTeacher.nom} aux classes
+              </h2>
+              
+              <div className="space-y-4">
+                <div className="max-h-64 overflow-y-auto border border-gray-300/50 dark:border-gray-600/50 rounded-xl p-4 bg-white/50 dark:bg-gray-700/50">
+                  {classes.map((classe) => (
+                    <label key={classe._id} className="flex items-center space-x-3 py-2">
+                      <input
+                        type="checkbox"
+                        checked={(assigningClassTeacher.classe || []).includes(classe._id)}
+                        onChange={(e) => {
+                          const currentClasses = assigningClassTeacher.classe || [];
+                          if (e.target.checked) {
+                            setAssigningClassTeacher({
+                              ...assigningClassTeacher,
+                              classe: [...currentClasses, classe._id]
+                            });
+                          } else {
+                            setAssigningClassTeacher({
+                              ...assigningClassTeacher,
+                              classe: currentClasses.filter(id => id !== classe._id)
+                            });
+                          }
+                        }}
+                        className="rounded text-green-600 focus:ring-green-500"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{classe.nom}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => { setShowClassModal(false); setAssigningClassTeacher(null); }}
+                  className="px-6 py-3 text-gray-600 dark:text-gray-400 hover:bg-gradient-to-r hover:from-gray-100 hover:to-gray-200 dark:hover:from-gray-700 dark:hover:to-gray-600 rounded-xl transition-all duration-300 transform hover:scale-105 hover-lift"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleSaveClassAssignment}
+                  className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl hover-lift"
+                >
+                  Enregistrer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal d'affectation aux matières */}
+        {showMatiereModal && assigningMatiereTeacher && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+            <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl p-8 w-full max-w-lg mx-4 shadow-2xl border border-gray-200/50 dark:border-gray-700/50 animate-scale-in">
+              <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent flex items-center">
+                <FontAwesomeIcon icon={faBookOpen} className="mr-3 text-orange-600" />
+                Affecter {assigningMatiereTeacher.prenom} {assigningMatiereTeacher.nom} aux matières
+              </h2>
+              
+              <div className="space-y-4">
+                <div className="max-h-64 overflow-y-auto border border-gray-300/50 dark:border-gray-600/50 rounded-xl p-4 bg-white/50 dark:bg-gray-700/50">
+                  {matieres.map((matiere) => (
+                    <label key={matiere._id} className="flex items-center space-x-3 py-2">
+                      <input
+                        type="checkbox"
+                        checked={(assigningMatiereTeacher.matieres || []).includes(matiere._id)}
+                        onChange={(e) => {
+                          const currentMatieres = assigningMatiereTeacher.matieres || [];
+                          if (e.target.checked) {
+                            setAssigningMatiereTeacher({
+                              ...assigningMatiereTeacher,
+                              matieres: [...currentMatieres, matiere._id]
+                            });
+                          } else {
+                            setAssigningMatiereTeacher({
+                              ...assigningMatiereTeacher,
+                              matieres: currentMatieres.filter(id => id !== matiere._id)
+                            });
+                          }
+                        }}
+                        className="rounded text-orange-600 focus:ring-orange-500"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{matiere.nom}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => { setShowMatiereModal(false); setAssigningMatiereTeacher(null); }}
+                  className="px-6 py-3 text-gray-600 dark:text-gray-400 hover:bg-gradient-to-r hover:from-gray-100 hover:to-gray-200 dark:hover:from-gray-700 dark:hover:to-gray-600 rounded-xl transition-all duration-300 transform hover:scale-105 hover-lift"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleSaveMatiereAssignment}
+                  className="px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-xl hover:from-orange-700 hover:to-red-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl hover-lift"
                 >
                   Enregistrer
                 </button>

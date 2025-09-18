@@ -21,6 +21,8 @@ function MatieresPage() {
     const [sortOrder, setSortOrder] = useState('asc');
     const [viewMode, setViewMode] = useState('grid');
     const [showFilters, setShowFilters] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingSubject, setEditingSubject] = useState(null);
   
     useEffect(() => {
       const fetchData = async () => {
@@ -90,7 +92,7 @@ function MatieresPage() {
       if (newSubject.nom && newSubject.coef) {
         setLoading(true);
         try {
-          const created = await matiereService.create({ nom, coef });
+          const created = await matiereService.create({ nom: newSubject.nom, coef: newSubject.coef });
           setSubjects(prev => [...prev, created]);
           setSuccessMsg('Matière ajoutée avec succès !');
           setNewSubject({ nom: '', coef: 1 });
@@ -110,8 +112,36 @@ function MatieresPage() {
         try {
           await matiereService.remove(id);
           setSubjects(subjects.filter(subject => subject._id !== id));
+          setSuccessMsg('Matière supprimée avec succès !');
+          setTimeout(() => setSuccessMsg(''), 2000);
         } catch (e) {
           alert("Erreur lors de la suppression");
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    const handleEditSubject = (subject) => {
+      setEditingSubject({ ...subject });
+      setShowEditModal(true);
+    };
+
+    const handleUpdateSubject = async () => {
+      if (editingSubject.nom && editingSubject.coef) {
+        setLoading(true);
+        try {
+          const updated = await matiereService.update(editingSubject._id, {
+            nom: editingSubject.nom,
+            coef: editingSubject.coef
+          });
+          setSubjects(prev => prev.map(s => s._id === editingSubject._id ? updated : s));
+          setSuccessMsg('Matière modifiée avec succès !');
+          setShowEditModal(false);
+          setEditingSubject(null);
+          setTimeout(() => setSuccessMsg(''), 2000);
+        } catch (e) {
+          alert("Erreur lors de la modification");
         } finally {
           setLoading(false);
         }
@@ -315,7 +345,7 @@ function MatieresPage() {
                               </div>
                               <div className="flex space-x-2">
                                 <button
-                                  onClick={() => {/* TODO: Implémenter l'édition */}}
+                                  onClick={() => handleEditSubject(subject)}
                                   className="p-3 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-xl transition-all duration-300 hover:scale-110"
                                 >
                                   <FontAwesomeIcon icon={faEdit} />
@@ -374,7 +404,7 @@ function MatieresPage() {
                             </div>
                             <div className="flex items-center space-x-2">
                               <button
-                                onClick={() => {/* TODO: Implémenter l'édition */}}
+                                onClick={() => handleEditSubject(subject)}
                                 className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-lg transition-colors"
                               >
                                 <FontAwesomeIcon icon={faEdit} />
@@ -494,6 +524,96 @@ function MatieresPage() {
                             {successMsg}
                           </div>
                         )}
+                      </form>
+                    </div>
+                  </div>
+                )}
+
+                {/* Modal de modification */}
+                {showEditModal && editingSubject && (
+                  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+                    <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl shadow-2xl p-0 w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden border border-gray-200/50 dark:border-gray-700/50 animate-scale-in">
+                      <div className="relative bg-gradient-to-r from-orange-600 via-red-600 to-pink-600 p-8 text-white">
+                        <div className="absolute inset-0 bg-black/10"></div>
+                        <div className="relative flex items-center gap-4">
+                          <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm">
+                            <FontAwesomeIcon icon={faEdit} className="w-8 h-8" />
+                          </div>
+                          <div>
+                            <h2 className="text-3xl font-black mb-2">Modifier la Matière</h2>
+                            <p className="text-orange-100 text-lg">Modifiez les informations de la matière</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setShowEditModal(false)}
+                          className="absolute top-4 right-4 p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-all duration-300"
+                        >
+                          <XCircle className="w-6 h-6" />
+                        </button>
+                      </div>
+
+                      <form onSubmit={e => { e.preventDefault(); handleUpdateSubject(); }} className="p-8 space-y-6">
+                        <div className="space-y-2">
+                          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
+                            Nom de la matière *
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={editingSubject.nom}
+                              onChange={(e) => setEditingSubject({ ...editingSubject, nom: e.target.value })}
+                              className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border-2 border-gray-200 dark:border-gray-600 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 transition-all duration-300 text-lg"
+                              required
+                            />
+                            <FontAwesomeIcon icon={faBook} className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
+                            Coefficient *
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              min="1"
+                              max="10"
+                              value={editingSubject.coef}
+                              onChange={(e) => setEditingSubject({ ...editingSubject, coef: parseInt(e.target.value) || 1 })}
+                              className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border-2 border-gray-200 dark:border-gray-600 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 transition-all duration-300 text-lg"
+                              required
+                            />
+                            <Star className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                          </div>
+                        </div>
+
+                        <div className="flex gap-4 pt-6">
+                          <button 
+                            type="button" 
+                            onClick={() => setShowEditModal(false)} 
+                            className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl font-bold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300 transform hover:scale-105"
+                          >
+                            <XCircle className="w-5 h-5" />
+                            Annuler
+                          </button>
+                          <button 
+                            type="submit" 
+                            disabled={loading}
+                            className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
+                          >
+                            {loading ? (
+                              <>
+                                <FontAwesomeIcon icon={faSpinner} spin className="w-5 h-5" />
+                                Modification...
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle className="w-5 h-5" />
+                                Modifier
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </form>
                     </div>
                   </div>
