@@ -19,6 +19,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState(null);
+  const [openMobileGroup, setOpenMobileGroup] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(
     localStorage.theme === 'dark' ||
     (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
@@ -315,7 +316,7 @@ const Navbar = () => {
         onClick={toggleMenu}
       >
         <div
-          className={`fixed top-0 right-0 w-72 h-full bg-white dark:bg-gray-900 shadow-2xl transform transition-all duration-500 ease-in-out border-l border-gray-200 dark:border-gray-700 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          className={`fixed top-0 right-0 w-72 h-screen bg-white dark:bg-gray-900 shadow-2xl transform transition-all duration-500 ease-in-out border-l border-gray-200 dark:border-gray-700 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="p-6 border-b border-gray-200/50 dark:border-gray-700/50 flex justify-between items-center bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-700">
@@ -329,16 +330,44 @@ const Navbar = () => {
             </button>
           </div>
           <div className="flex bg-gray-300 dark:bg-gray-600 flex-col p-6 space-y-3">
-            {navMobileLinks.map(link => (
-              <NavLink
-                key={link.name}
-                to={link.path}
-                onClick={() => setIsOpen(false)}
-                className={({ isActive }) => `${linkBaseStyle} ${isActive ? linkActiveStyle : linkInactiveStyle}`}
-              >
-                {link.icon ? <link.icon size={20} /> : null}
-                {link.name}
-              </NavLink>
+            {navGroups.map(group => (
+              group.items.length === 1 ? (
+                <NavLink
+                  key={group.label}
+                  to={group.items[0].path}
+                  onClick={() => setIsOpen(false)}
+                  className={({ isActive }) => `${linkBaseStyle} ${isActive ? linkActiveStyle : linkInactiveStyle}`}
+                >
+                  {group.icon ? <group.icon size={20} /> : null}
+                  {group.items[0].name}
+                </NavLink>
+              ) : (
+                <div key={group.label} className="space-y-2">
+                  <button
+                    onClick={() => setOpenMobileGroup(prev => prev === group.label ? null : group.label)}
+                    className={`${linkBaseStyle} ${linkInactiveStyle} w-full justify-between`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {group.icon ? <group.icon size={20} /> : null}
+                      {group.label}
+                    </div>
+                    <ChevronDown size={16} className={`transition-transform ${openMobileGroup === group.label ? 'rotate-180' : ''}`} />
+                  </button>
+                  <div className={`ml-4 space-y-1 overflow-hidden transition-all duration-300 ${openMobileGroup === group.label ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+                    {group.items.map(item => (
+                      <NavLink
+                        key={item.name}
+                        to={item.path}
+                        onClick={() => setIsOpen(false)}
+                        className={({ isActive }) => `${linkBaseStyle} ${isActive ? linkActiveStyle : linkInactiveStyle} text-sm`}
+                      >
+                        {item.icon ? <item.icon size={16} /> : null}
+                        {item.name}
+                      </NavLink>
+                    ))}
+                  </div>
+                </div>
+              )
             ))}
             
             {/* Bouton de déconnexion pour mobile */}

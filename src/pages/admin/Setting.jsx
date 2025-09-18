@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import  anneeService  from "../../services/annee";
-import { School, Calendar, Plus, Check, Settings, Loader2 } from "lucide-react";
+import userService from "../../services/userService";
+import { School, Calendar, Plus, Check, Settings, Loader2, User } from "lucide-react";
 
 function Setting() {
   const [annees, setAnnees] = useState([]);
@@ -9,6 +10,8 @@ function Setting() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState(null);
+  const [newUser, setNewUser] = useState({ pseudo: "", email: "", password: "", role: "admin" });
+  const [creatingUser, setCreatingUser] = useState(false);
 
   const [ecole, setEcole] = useState({
     nom: "Elite School",
@@ -65,6 +68,21 @@ function Setting() {
   const handleEcoleChange = (e) => {
     const { name, value } = e.target;
     setEcole((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleCreateUser = async () => {
+    if (!newUser.pseudo || !newUser.email || !newUser.password) return;
+    try {
+      setCreatingUser(true);
+      await userService.create(newUser);
+      setNewUser({ pseudo: "", email: "", password: "", role: "admin" });
+      setError(null);
+    } catch (err) {
+      console.error('Erreur lors de la création de l\'utilisateur:', err);
+      setError('Erreur lors de la création de l\'utilisateur');
+    } finally {
+      setCreatingUser(false);
+    }
   };
 
   return (
@@ -274,6 +292,81 @@ function Setting() {
               ))}
               </div>
             )}
+          </div>
+        </section>
+
+        {/* Gestion des utilisateurs */}
+        <section className="backdrop-blur-md bg-white/70 dark:bg-gray-800/70 p-6 rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/30 space-y-6 transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] animate-slide-up" style={{animationDelay: '0.3s'}}>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 text-white">
+              <User className="w-5 h-5" />
+            </div>
+            <h2 className="text-xl font-semibold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+              Gestion des utilisateurs
+            </h2>
+          </div>
+
+          {/* Formulaire création utilisateur */}
+          <div className="backdrop-blur-sm bg-gradient-to-r from-green-50/50 to-emerald-50/50 dark:from-gray-700/30 dark:to-gray-600/30 p-4 rounded-xl border border-white/30 dark:border-gray-600/30">
+            <h3 className="text-lg font-medium mb-4 text-gray-800 dark:text-gray-200">Ajouter un nouvel utilisateur</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Pseudo</label>
+                <input
+                  type="text"
+                  placeholder="Nom d'utilisateur"
+                  value={newUser.pseudo}
+                  onChange={(e) => setNewUser((prev) => ({ ...prev, pseudo: e.target.value }))}
+                  className="w-full p-3 rounded-xl backdrop-blur-sm bg-white/50 dark:bg-gray-700/50 border border-white/30 dark:border-gray-600/30 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-300"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                <input
+                  type="email"
+                  placeholder="email@exemple.com"
+                  value={newUser.email}
+                  onChange={(e) => setNewUser((prev) => ({ ...prev, email: e.target.value }))}
+                  className="w-full p-3 rounded-xl backdrop-blur-sm bg-white/50 dark:bg-gray-700/50 border border-white/30 dark:border-gray-600/30 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-300"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Mot de passe</label>
+                <input
+                  type="password"
+                  placeholder="Mot de passe"
+                  value={newUser.password}
+                  onChange={(e) => setNewUser((prev) => ({ ...prev, password: e.target.value }))}
+                  className="w-full p-3 rounded-xl backdrop-blur-sm bg-white/50 dark:bg-gray-700/50 border border-white/30 dark:border-gray-600/30 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-300"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Rôle</label>
+                <select
+                  value={newUser.role}
+                  onChange={(e) => setNewUser((prev) => ({ ...prev, role: e.target.value }))}
+                  className="w-full p-3 rounded-xl backdrop-blur-sm bg-white/50 dark:bg-gray-700/50 border border-white/30 dark:border-gray-600/30 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all duration-300"
+                >
+                  <option value="admin">Admin</option>
+                  <option value="enseignant">Enseignant</option>
+                  <option value="eleve">Élève</option>
+                </select>
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={handleCreateUser}
+                  disabled={creatingUser || !newUser.pseudo || !newUser.email || !newUser.password}
+                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg font-medium"
+                >
+                  {creatingUser ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Plus className="w-5 h-5" />
+                  )}
+                  {creatingUser ? 'Création...' : 'Créer utilisateur'}
+                </button>
+              </div>
+            </div>
           </div>
         </section>
       </div>

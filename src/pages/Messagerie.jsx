@@ -37,11 +37,21 @@ const Messagerie = () => {
   const [classGroups, setClassGroups] = useState([]);
   const [activeTab, setActiveTab] = useState('private'); // 'private' ou 'groups'
   const [showUserModal, setShowUserModal] = useState(false);
+  const [messageHistory, setMessageHistory] = useState([]);
 
   // Charger les conversations et groupes de classe
   useEffect(() => {
     if (user) {
       console.log('Chargement initial des données pour utilisateur:', user);
+      
+      // Charger l'historique des messages depuis localStorage pour les élèves
+      if (user.role === 'eleve') {
+        const savedHistory = localStorage.getItem(`messageHistory_${user.id || user._id}`);
+        if (savedHistory) {
+          setMessageHistory(JSON.parse(savedHistory));
+        }
+      }
+      
       fetchConversations();
       fetchClassGroups();
       fetchAvailableUsers();
@@ -49,50 +59,80 @@ const Messagerie = () => {
       socketService.connect();
       
       // Configuration de la réception des messages en temps réel
-      socketService.onReceiveMessage((message) => {
+      const handleReceiveMessage = (message) => {
         console.log('Message reçu via Socket.IO:', message);
-        console.log('Conversation active actuelle:', activeConversation);
         
-        // Vérifier si le message appartient à la conversation active
-        if (activeConversation) {
-          let shouldAddMessage = false;
-          
-          if (message.type === 'private' && activeConversation.type === 'private') {
-            // Pour les messages privés, vérifier les participants
+        // Ajouter le message à la conversation active si elle correspond
+        setActiveConversation(currentActive => {
+          if (currentActive) {
+            let shouldAddMessage = false;
             const userId = user?.id || user?._id;
-            const messageFromParticipant = activeConversation.participants.some(p => 
-              p._id === message.expediteur?._id || p._id === message.expediteur
-            );
-            shouldAddMessage = messageFromParticipant;
-          } else if (message.type === 'group' && activeConversation.type === 'group') {
-            // Pour les messages de groupe, vérifier l'ID de la classe
-            shouldAddMessage = message.classeId === activeConversation._id;
+            
+            if (message.type === 'private' && currentActive.type === 'private') {
+              // Pour les messages privés, vérifier les participants
+              const messageFromParticipant = currentActive.participants.some(p => 
+                p._id === message.expediteur?._id || p._id === message.expediteur
+              );
+              shouldAddMessage = messageFromParticipant;
+            } else if (message.type === 'group' && currentActive.type === 'group') {
+              // Pour les messages de groupe, vérifier l'ID de la classe
+              shouldAddMessage = message.classeId === currentActive._id;
+            }
+            
+            if (shouldAddMessage) {
+              setMessages(prev => {
+                const exists = prev.some(m => m._id === message._id);
+                if (!exists) {
+                  console.log('Ajout du nouveau message à la conversation active');
+                  return [...prev, message];
+                }
+                return prev;
+              });
+            }
           }
-          
-          if (shouldAddMessage) {
-            setMessages(prev => {
-              const exists = prev.some(m => m._id === message._id);
-              if (!exists) {
-                console.log('Ajout du nouveau message à la conversation active');
-                return [...prev, message];
-              }
-              console.log('Message déjà existant, ignoré');
-              return prev;
-            });
-          }
+          return currentActive;
+        });
+        
+        // Sauvegarder l'historique des messages pour les élèves
+        if (user.role === 'eleve') {
+          setMessageHistory(prev => {
+            const exists = prev.some(m => m._id === message._id);
+            if (!exists) {
+              const updatedHistory = [...prev, message];
+              localStorage.setItem(`messageHistory_${user.id || user._id}`, JSON.stringify(updatedHistory));
+              return updatedHistory;
+            }
+            return prev;
+          });
         }
         
         // Mettre à jour la liste des conversations
         fetchConversations();
-      });
+      };
+      
+      socketService.onReceiveMessage(handleReceiveMessage);
     }
     
     // Cleanup lors du démontage
     return () => {
       socketService.offReceiveMessage();
-      socketService.disconnect();
     };
-  }, [user, activeConversation]);
+  }, [user]);
+
+  // Rejoindre la conversation active via Socket.IO
+  useEffect(() => {
+    if (activeConversation && user) {
+      if (activeConversation.type === 'private') {
+        const userId = user?.id || user?._id;
+        const otherUserId = activeConversation.participants.find(p => p._id !== userId)?._id;
+        if (userId && otherUserId) {
+          socketService.joinPrivateConversation(userId, otherUserId);
+        }
+      } else if (activeConversation.type === 'group') {
+        socketService.joinClassGroup(activeConversation._id);
+      }
+    }
+  }, [activeConversation, user]);
 
   // Auto-scroll vers le bas des messages
   useEffect(() => {
@@ -132,15 +172,23 @@ const Messagerie = () => {
       
       if (user.role === 'eleve') {
         // Pour un élève, récupérer UNIQUEMENT sa classe assignée
-        if (user.classeId) {
-          console.log('Récupération de la classe de l\'\u00e9lève:', user.classeId);
-          const classeData = await classeService.getById(user.classeId);
-          if (classeData) {
-            classes = [classeData];
-            console.log('Classe de l\'\u00e9lève chargée:', classeData);
+        try {
+          const eleveResponse = await fetch(`https://schoolelite.onrender.com/api/eleves/${user.id_eleve}`, {
+            credentials: 'include',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+          });
+          if (eleveResponse.ok) {
+            const eleveData = await eleveResponse.json();
+            if (eleveData.classeId) {
+              const classeData = await classeService.getById(eleveData.classeId);
+              if (classeData) {
+                classes = [classeData];
+                console.log('Classe de l\'élève chargée:', classeData);
+              }
+            }
           }
-        } else {
-          console.log('Aucune classe assignée à cet élève');
+        } catch (error) {
+          console.error('Erreur lors du chargement de la classe de l\'élève:', error);
         }
       } else if (user.role === 'enseignant') {
         // Pour un enseignant, récupérer toutes les classes où il enseigne
@@ -329,6 +377,15 @@ const Messagerie = () => {
         }
         return prev;
       });
+      
+      // Sauvegarder dans l'historique local pour les élèves
+      if (user.role === 'eleve') {
+        setMessageHistory(prev => {
+          const updatedHistory = [...prev, localMessage];
+          localStorage.setItem(`messageHistory_${user.id || user._id}`, JSON.stringify(updatedHistory));
+          return updatedHistory;
+        });
+      }
 
       // Mettre à jour la conversation avec le dernier message
       setConversations(prev => prev.map(conv => 
@@ -688,7 +745,9 @@ const Messagerie = () => {
   ) : (
     // Affichage des messages
     messages.map((message, index) => {
-      const isOwn = message.expediteur?._id === user?._id;
+      const userId = user?.id || user?._id;
+      const messageExpediteurdId = message.expediteur?._id || message.expediteur;
+      const isOwn = messageExpediteurdId === userId;
 
       // Afficher la date uniquement si le message précédent est d'une autre date
       const showDate =
