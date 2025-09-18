@@ -437,7 +437,7 @@ const Messagerie = () => {
   }
 
   return (
-    <div className="flex mt-20 h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="flex mt-15 md:mt-11 h-screen bg-gray-100 dark:bg-gray-900">
       {/* Sidebar - Liste des conversations */}
       <div className={`${activeConversation ? 'hidden' : 'flex'} md:flex md:w-1/3 w-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-col`}>
         {/* Header */}

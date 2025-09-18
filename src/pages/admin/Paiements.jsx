@@ -168,7 +168,7 @@ function Paiements() {
   };
 
   return (
-    <div className="min-h-screen w-full p-4 md:p-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-gray-900 dark:text-white transition-all duration-300">
+    <div className="min-h-screen mt-15 md:mt-11 w-full p-4 md:p-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-gray-900 dark:text-white transition-all duration-300">
       <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
         
         {/* En-tête */}
@@ -219,11 +219,15 @@ function Paiements() {
                 className="flex-1 min-w-[200px] p-3 rounded-xl backdrop-blur-sm bg-white/50 dark:bg-gray-700/50 border border-white/30 dark:border-gray-600/30 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-300"
               >
                 <option value="">Sélectionner une année</option>
-                {annesActive && annesActive.map((annee) => (
+                {annesActive && Array.isArray(annesActive) ? annesActive.map((annee) => (
                   <option key={annee._id} value={annee._id}>
                     {annee.libelle}
                   </option>
-                ))}
+                )) : annesActive && (
+                  <option key={annesActive._id} value={annesActive._id}>
+                    {annesActive.libelle}
+                  </option>
+                )}
               </select>
             </div>
           </div>

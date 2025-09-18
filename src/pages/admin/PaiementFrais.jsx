@@ -6,6 +6,7 @@ import EleveForm from "../../components/eleves/FomEleves";
 import EditStudentForm from "../../components/eleves/EditStudentModal";
 import { notifySuccess, notifyError, notifyInfo } from '../../components/toastService';
 import { Loader2, AlertCircle } from 'lucide-react';
+import FraisScolariteForm from "../../components/paiements/FraiFormulaire";
 
 function PaiementFrais() {
 
@@ -67,7 +68,7 @@ function PaiementFrais() {
   };
 
   return (
-    <div className="min-h-screen mt-10 w-full p-4 md:p-8 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-gray-900 dark:text-white transition-all duration-300">
+    <div className="min-h-screen mt-15 md:mt-11 w-full p-4 md:p-8 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-gray-900 dark:text-white transition-all duration-300">
       <div className="max-w-7xl mx-auto">
         {/* En-tête de la page */}
         <div className="mb-8 text-center">
@@ -122,7 +123,7 @@ function PaiementFrais() {
           onClose={closeAddModal}
           title="Ajouter des frais de scolarité"
         >
-          <EleveForm
+          <FraisScolariteForm
             onSuccess={() => {
               closeAddModal();
               fetchEleves();

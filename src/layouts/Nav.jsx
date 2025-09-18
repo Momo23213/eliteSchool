@@ -328,7 +328,7 @@ const Navbar = () => {
               <X size={24} />
             </button>
           </div>
-          <div className="flex flex-col p-6 space-y-3">
+          <div className="flex bg-gray-300 dark:bg-gray-600 flex-col p-6 space-y-3">
             {navMobileLinks.map(link => (
               <NavLink
                 key={link.name}

@@ -17,7 +17,7 @@ export default function ClassCreationForm({ onSuccess, onCancel, onError }) {
   useEffect(() => {
     const fetchAnneesScolaires = async () => {
       try {
-        const response = await axios.get('http://localhost:3002/api/annees');
+        const response = await axios.get('https://schoolelite.onrender.com/api/annees');
         setAnneesScolaires(response.data);
       } catch {
         onError('Impossible de charger les années scolaires.');
@@ -45,7 +45,7 @@ export default function ClassCreationForm({ onSuccess, onCancel, onError }) {
     setLoadingSubmit(true);
 
     try {
-      await axios.post('http://localhost:3002/api/classe/creer', formData);
+      await axios.post('https://schoolelite.onrender.com/api/classe/creer', formData);
       onSuccess();
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {

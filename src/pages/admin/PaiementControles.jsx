@@ -116,7 +116,7 @@ function PaiementControles() {
   });
 
   return (
-    <div className="min-h-screen w-full p-4 md:p-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-gray-900 dark:text-white transition-all duration-300">
+    <div className="min-h-screen mt-15 md:mt-11 w-full p-4 md:p-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-gray-900 dark:text-white transition-all duration-300">
       <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
         
         {/* En-tête */}

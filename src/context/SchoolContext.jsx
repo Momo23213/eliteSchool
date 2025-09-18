@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import classeService from "../services/classeService";
 import matiereService from "../services/matiereService";
-import anneeService from "../services/anneeService";
+// import anneeService from "../services/anneeService";
 import enseignantService from "../services/enseignantService";
-
+import anneeService from '../services/annee'
 // 👉 Valeur par défaut vide pour éviter le "never"
 const SchoolContext = createContext({});
 
@@ -27,19 +27,21 @@ export const SchoolProvider = ({ children }) => {
       setLoading(true);
       try {
         // Désactiver temporairement anneeService car la route /api/annees n'existe pas en production
-        const [classesData, matieresData, enseignantsData] = await Promise.all([
+        const [classesData, matieresData, enseignantsData,anneer,annees] = await Promise.all([
           classeService.getAll(),
           matiereService.getAll(),
           enseignantService.getAll(),
+          anneeService.getActive(),
+          anneeService.getAll()
         ]);
 
         setClasses(classesData);
         setMatieres(matieresData);
         setEnseignants(enseignantsData);
+        setAnnesActive(anneer);
+        setAnnes(annees);
         
         // Valeurs par défaut pour les années scolaires
-        setAnnes([]);
-        setAnnesActive([]);
       } catch (error) {
         console.error("Erreur lors du chargement des données :", error);
       } finally {

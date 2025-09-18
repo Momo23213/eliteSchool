@@ -13,8 +13,6 @@ const Dashboard = () => {
     const fetchStats = async () => {
       try {
         const res = await axios.get("https://schoolelite.onrender.com/api/statistiques");
-        console.log("Données complètes de l'API:", res.data);
-        console.log("sexeStats:", res.data.sexeStats);
         setStats(res.data);
       } catch (err) {
         console.error("Erreur lors du chargement des statistiques:", err);
@@ -28,7 +26,7 @@ const Dashboard = () => {
 
   if (loading || !stats) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <div className="mt-15 md:mt-11 flex items-center justify-center h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-500 border-t-transparent mx-auto mb-4"></div>
           <p className="text-lg font-medium text-gray-600 dark:text-gray-300">Chargement des données...</p>
@@ -59,7 +57,7 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen mt-15 md:mt-11 bg-gradient-to-br from-indigo-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Header avec gradient */}
       <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

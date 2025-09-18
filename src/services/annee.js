@@ -1,6 +1,6 @@
 import api from "./api";
 
-export const anneeService = {
+const anneeService = {
   // Créer une nouvelle année
   create: async (data) => {
     const res = await api.post(`annee/`, data);
@@ -37,3 +37,7 @@ export const anneeService = {
     return res.data;
   },
 };
+
+export default anneeService;
+
+//

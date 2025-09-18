@@ -198,7 +198,7 @@ const NotesSaisie = () => {
   const labelStyle = "flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300 mb-2";
 
   return (
-    <div className="min-h-screen mt-10 w-full p-4 md:p-8 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-gray-900 dark:text-white transition-all duration-300">
+    <div className="min-h-screen mt-15 md:mt-11 w-full p-4 md:p-8 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-gray-900 dark:text-white transition-all duration-300">
       <header className="mb-8 animate-slide-down">
         <div className="flex items-center mb-4">
           <div className="p-3 bg-gradient-to-r from-green-500 to-blue-600 rounded-2xl mr-4 shadow-lg animate-float">

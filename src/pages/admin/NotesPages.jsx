@@ -89,7 +89,7 @@ function NotesPages() {
       return matchesSearchTerm && matchesFilters;
     });
   return (
-    <div className="min-h-screen mt-10 w-full p-4 md:p-8 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-gray-900 dark:text-white transition-all duration-300">
+    <div className="min-h-screen mt-15 md:mt-11  w-full p-4 md:p-8 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-gray-900 dark:text-white transition-all duration-300">
        <div className="container mx-auto p-4 md:p-8">
       
               {/* Bloc de recherche et de filtres */}

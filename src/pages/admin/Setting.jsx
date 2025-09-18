@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { anneeService } from "../../services/annee";
+import  anneeService  from "../../services/annee";
 import { School, Calendar, Plus, Check, Settings, Loader2 } from "lucide-react";
 
 function Setting() {
@@ -68,7 +68,7 @@ function Setting() {
   };
 
   return (
-    <div className="min-h-screen w-full p-4 md:p-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-gray-900 dark:text-white transition-all duration-300">
+    <div className="min-h-screen mt-15 md:mt-11 w-full p-4 md:p-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-gray-900 dark:text-white transition-all duration-300">
       <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
         <div className="text-center md:text-left animate-slide-up">
           <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
