@@ -80,14 +80,19 @@ const Messagerie = () => {
             }
             
             if (shouldAddMessage) {
-              setMessages(prev => {
-                const exists = prev.some(m => m._id === message._id);
-                if (!exists) {
-                  console.log('Ajout du nouveau message à la conversation active');
-                  return [...prev, message];
-                }
-                return prev;
-              });
+              // Ne pas ajouter le message si c'est l'utilisateur actuel qui l'a envoyé (déjà ajouté localement)
+              const currentUserId = user?.id || user?._id;
+              const messageFromCurrentUser = (message.expediteur?._id || message.expediteur) === currentUserId;
+              if (!messageFromCurrentUser) {
+                setMessages(prev => {
+                  const exists = prev.some(m => m._id === message._id);
+                  if (!exists) {
+                    console.log('Ajout du nouveau message à la conversation active');
+                    return [...prev, message];
+                  }
+                  return prev;
+                });
+              }
             }
           }
           return currentActive;
@@ -767,11 +772,11 @@ const Messagerie = () => {
 
           <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-xs md:max-w-sm lg:max-w-md ${isOwn ? 'order-2' : 'order-1'}`}>
-              {!isOwn && (
-                <p className="text-xs text-gray-600 dark:text-gray-400 mb-1 ml-2">
-                  {message.expediteur?.nom || message.expediteur?.prenom || 'Utilisateur'}
-                </p>
-              )}
+              <p className={`text-xs mb-1 ml-2 ${
+                isOwn ? 'text-blue-200 text-right mr-2' : 'text-gray-600 dark:text-gray-400'
+              }`}>
+                {isOwn ? 'Vous' : (message.expediteur?.nom || message.expediteur?.prenom || message.expediteurNom || 'Utilisateur')}
+              </p>
               <div
                 className={`p-3 rounded-2xl ${
                   isOwn

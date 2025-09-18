@@ -12,7 +12,7 @@ const userService = {
   },
 
   create: async (data) => {
-    const res = await api.post("/users", data);
+    const res = await api.post("/auth/ajoute", data);
     return res.data;
   },
 
